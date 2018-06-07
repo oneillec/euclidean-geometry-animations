@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for HTML5 for Windows version 5.2.0">
+  <title>VivioJS write-once help</title>
+  <meta charset="utf-8">
+  <meta name="Author" content="jones@scss.tcd.ie">
+  <meta name="description" content="VivioJS write-once cache coherency animation help">
+  <meta name="keywords" content="VivioJS, animation, cache coherency, protocol, write-once">
+  <link rel="shortcut icon" href="../vivio.ico" type="image/x-icon">
+  <script src="../analytics.js">
+  </script>
+  <script src="../funcs.js">
+  </script>
+  <script src="../vivio.js">
+  </script>
+  <script src="writeOnce.js">
+  </script>
+</head>
+<body style="background-color:#e0e0e0;">
+  <script>
+        header("Write-Once Cache Coherency Protocol");
+  </script>
+  <table style="margin-left:2%; width:96%;" border="0" cellspacing="0" cellpadding="5">
+    <tr>
+      <td>
+        <p style="text-align:justify;"><br>
+        This VivioJS animation is designed to help you understand the write-once cache coherency protocol. The protocol was first described by James Goodman in
+        "<i>Using Cache Memory to Reduce Processor-Memory Traffic</i>" presented at the 10th International Symposium of Computer Architecture (ISCA 1983).</p>
+        <p style="text-align:justify;">A multiprocessor system is depicted comprising main memory, 3 CPUs and their associated caches. For simplicity, main
+        memory contains 4 locations a0, a1, a2 and a3. The caches are direct mapped and contain two sets - addresses a0 and a2 map to set 0 and a1 and a3 map
+        to set 1.</p>
+        <p style="text-align:justify;">NB: in order to simplify this animation, the size of a cache line and that of a CPU read/write operation are identical.
+        On a write miss, however, the CPU reads memory even though it will completely overwrite it as this behaviour mirrors that of real caches where the size
+        of the cache line will usually be larger than that of a CPU read/write operation.<br></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align:center; color:red;">
+        <div style="position:relative;">
+          <!-- tabindex needed for keyboard input -->
+          <canvas id="canvas" style="width:95%; height:620px; overflow:hidden; display:block;">
+            No canvas support
+          </canvas>
+        </div>
+        Click on diagram to activate animation or <a href="writeOnce.htm">here</a> for a full screen version.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <p style="text-align:justify;">Each CPU contains buttons which initiate read or write transactions on the specified memory location. A "CPU write"
+        writes an incrementing value (initially 1) to "memory".</p>
+        <p style="text-align:justify;">The idea is to press the buttons and see if you can follow the actions and state transitions which occur. It is possible
+        to introduce bugs into the animation by pressing the "bug free" button in the bottom right hand corner. See if you can find out just exactly what the
+        bugs are!</p>
+        <p style="text-align:justify;">The direction of the traffic on the address and data busses are indicated by blue and red arrows respectively. The cache
+        lines and memory location involved in the transaction are coloured green. Stale memory locations are coloured gray.</p>
+        <p style="text-align:justify;">A cache line can be in one of 4 states. <b>Invalid:</b> cache line NOT present in cache. <b>Valid:</b> cache line
+        present in this cache and possibly other caches as well, all copies identical to copy in memory. <b>Reserved:</b> cache line present in this cache
+        <u>ONLY</u> and cache line identical to copy in memory. <b>Dirty:</b> cache line present in this cache <u>ONLY</u>, but memory copy out of date
+        (stale). Writes to <b>Valid</b> and <b>Invalid</b> cache lines are write through whereas writes to <b>Reserved</b> and <b>Dirty</b> cache lines are
+        write-back.</p>
+        <p style="text-align:justify;">Here is the state transition diagram for a cache line:</p>
+        <p><img style="margin:0px auto; display:block" border="0" src="writeOnce.png" alt="writeOnce state transition digram"><br></p>
+        <p style="text-align:justify;">The animation can be reset by pressing the "reset" button in the bottom right hand corner and this help information is
+        displayed by pressing the "help" button.</p>
+        <p style="color:red; font-size:larger;"><u>Sample sequence to try [from Reset]</u></p><br>
+        <table style="margin-left:2%; width:96%; border-collapse:collapse;" border="1" cellpadding="4">
+          <tr>
+            <td style="width:5%; text-align:center;">1</td>
+            <td width="20%">CPU0: read a0</td>
+            <td><i>CPU0 reads a0 from memory - state V</i></td>
+          </tr>
+          <tr>
+            <td style="width:5%; text-align:center;">2</td>
+            <td width="20%">CPU0: read a0</td>
+            <td><i>CPU0 reads a0 from cache - state V</i></td>
+          </tr>
+          <tr>
+            <td style="width:5%; text-align:center;">3</td>
+            <td width="20%">CPU1: read a0</td>
+            <td><i>CPU1 reads a0 from memory - state V</i></td>
+          </tr>
+          <tr>
+            <td style="width:5%; text-align:center;">4</td>
+            <td width="20%">CPU0: write a0</td>
+            <td><i>CPU0 updates a0 in cache and writes through to a0 in memory; other caches invalidate their copies of a0 <span style=
+            "color:red;">[CPU1]</span> - state R</i></td>
+          </tr>
+          <tr>
+            <td style="width:5%; text-align:center;">5</td>
+            <td width="20%">CPU0: write a0</td>
+            <td><i>CPU0 updates a0 in cache ONLY - state D</i></td>
+          </tr>
+          <tr>
+            <td style="width:5%; text-align:center;">6</td>
+            <td width="20%">CPU0: write a0</td>
+            <td><i>CPU0 updates a0 in cache ONLY - state D</i></td>
+          </tr>
+          <tr>
+            <td style="width:5%; text-align:center;">7</td>
+            <td width="20%">CPU1: read a0</td>
+            <td><i>CPU1 reads a0, CPU0 cache intervenes and supplies data to cache and memory - state V</i></td>
+          </tr>
+          <tr>
+            <td style="width:5%; text-align:center;">8</td>
+            <td width="20%">CPU2: read a2</td>
+            <td><i>CPU2 reads a2 from memory - state V</i></td>
+          </tr>
+          <tr>
+            <td style="width:5%; text-align:center;">9</td>
+            <td width="20%">CPU0: write a2</td>
+            <td><i>as its a write miss CPU0 reads a2 from memory first <span style="color:red;">[shared with CPU2]</span>; updates a2 in cache and writes
+            through to a2 in memory, other caches invalidate their copies of a2 <span style="color:red;">[CPU2]</span> - state R</i></td>
+          </tr>
+          <tr>
+            <td style="width:5%; text-align:center;">10</td>
+            <td width="20%">CPU0: write a2</td>
+            <td><i>CPU0 updates a2 in cache ONLY - state D</i></td>
+          </tr>
+          <tr>
+            <td style="width:5%; text-align:center;">11</td>
+            <td width="20%">CPU0: write a0</td>
+            <td><i>CPU0 flushes a2 to memory; as its a write miss CPU0 reads a0 from memory first; updates a0 in cache and writes through to a0 in memory,
+            other caches invalidate their copies <span style="color:red;">[none] - state R</span></i></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table><br>
+  <script>
+        vplayer = new VPlayer("canvas", writeOnce);
+        footer("caches");
+  </script>
+</body>
+</html>

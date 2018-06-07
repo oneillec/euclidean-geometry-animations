@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for HTML5 for Windows version 5.2.0">
+  <meta charset="utf-8">
+  <title>VivioJS Animations</title>
+  <meta content="Vivio interactive reversible E-learning animation DLX MIPS simulation">
+  <link rel="icon" type="image/png" href="../vivio.png?v=2"/>
+  <script src="analytics.js"></script>
+  <script src="funcs.js"></script>
+</head>
+<body style="background-color:#e0e0e0">
+  <script>
+        header("CS3021/3421 Computer Architecture Animations");
+  </script><br>
+  <div style="margin-left:4%; width:92%;">
+  <table align=center style="max-width:1024px;" cellpadding="0" border="0">
+    <tr>
+      <td style="font-size:larger; color:red;"><i>Background</i></td>
+    </tr>
+    <tr>
+      <td>
+        <p style="margin-left:2%; margin-right:2%; text-align:justify;">VivioJS is a reworking of <a href="https://www.scss.tcd.ie/Jeremy.Jones/vivio%205.1/vivio.htm">Vivio 5.1</a>.
+        The original Vivio 5.1 implementation was based on a Netscape plugin (or ActiveX control).
+        The Vivio source code was first pre-compiled into VCODE. The VCODE was then downloaded by the Netscape plugin, JIT (just-in-time) compiled into IA32 machine code and executed.
+        The imminent demise of browser plugins together with a certain lack of portability has led to the development of VivioJS. VivioJS animations are now implemented
+        using HTML5 and JavaScript making them portable across browsers, operating systems and machine architectures. The VivioJS implementation comprises two
+        parts (1) a vivio.js runtime and (2) a compiler which converts Vivio code into JavaScript. The latter is needed to convert the concurrent actions
+        expressed in Vivio into JavaScript because this mapping is far from straightforward. The VivioJS animations have been tested using
+        Firefox, Chrome, Opera, Safari, IE and Edge on Windows, Linux, Android, OS X, macOS and iOS.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size:larger; color:red;"><i>Controlling Animation Playback</i></td>
+    </tr>
+    <tr>
+      <td>
+        <p style="margin-left:2%; margin-right:2%; text-align:justify;">Animation playback is controlled using the mouse buttons, mouse wheel and keys on the keyboard. Start or
+        pause playback by clicking the left mouse button on the animation background. Increase or decrease the animation speed by pressing the CTRL key and
+        rotating the mouse wheel. Single step the animation forwards and backwards by pausing the animation and then rotating the mouse wheel. If the left
+        mouse button is now clicked, playback will resume in the direction of the last step. Snap to the next or previous checkpoint by pausing the animation
+        and then pressing the SHIFT key and rotating the mouse wheel. A touch interface is currently under development.</p>
+        <p style="margin-left:2%; margin-right:2%; text-align:justify;">The arrow keys, normally on the right hand side of the keyboard, can be used in lieu of a mouse. The left
+        and right arrows are equivalent to rotating the mouse wheel forwards and backwards and the down arrow is equivalent to pressing the left mouse button.
+        Press the up arrow to reset the animation.</p>
+        <p style="margin-left:2%; margin-right:2%; text-align:justify;">Holding down SHIFT and pressing the up arrow will show/hide playback statistics. Holding down CTRL and
+        pressing the up arrow will show/hide the minimum bounding boxes (mbbs) indicating the areas of the screen that are redrawn on each animation step.
+        Finally, remember that F11 makes the browser go full screen.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size:larger; color:red;"><i>Animations</i></td>
+    </tr>
+    <tr>
+      <td>
+        <br>
+        <table style="margin-left:2%; width:96%;" cellspacing="0" cellpadding="2" border="0">
+          <tbody>
+            <tr>
+              <td>
+                <a href="dlx/dlx.htm">DLX/MIPS (initial multiplication program + not locked + help)</a>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="dlx/dlx1.htm">DLX/MIPS (no program + not locked + no help)</a>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="dlx/dlxtutorial.htm">DLX/MIPS tutorial by Edsko De Vries</a>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="https://www.scss.tcd.ie/Jeremy.Jones/VivioJS/dlx/showanim.php">DLX/MIPS with initial configuration selected from database</a>
+              </td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td>
+                <a href="caches/cache.htm">Cache animation</a> (<a href="caches/cacheHelp.htm">description</a>)
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="caches/writeThrough.htm">Write-through cache coherency animation</a> (<a href="caches/writeThroughHelp.htm">description</a>)
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="caches/writeOnce.htm">Write-once cache coherency animation</a> (<a href="caches/writeOnceHelp.htm">description</a>)
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="caches/firefly.htm">Firefly cache coherency animation</a> (<a href="caches/fireflyHelp.htm">description</a>)
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="caches/MESI.htm">MESI cache coherency animation</a> (<a href="caches/MESIHelp.htm">description</a>)
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="caches/ALL%20protocols.htm">All cache coherency protocols</a>
+              </td>
+            </tr>
+        		<td>&nbsp; </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="caches/TSX.htm">Intel TSX MESI cache animation </a> (<a href="caches/TSXHelp.htm">description</a>)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="color:red; font-size:larger;"><i>Acknowledgements</i></p>
+        <p style="text-align:justify; margin-left:2%">I would like to thank Edsko De Vries for developing the MIPS/DLX animation during a summer
+        internship.<br>
+        <br>
+        Please send constructive comments to <a href="mailto:jones@scss.tcd.ie">jones@scss.tcd.ie</a>.<br>
+        Copyright © <script>d.writeln(date.getFullYear());</script> Jeremy Jones, School of Computer Science and Statistics, Trinity College, Dublin 2, Ireland.</p>
+      </td>
+    </tr>
+  </table>
+  </div>
+  <script>
+    footer("=");
+  </script>
+</body>
+</html>

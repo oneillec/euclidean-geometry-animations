@@ -1,0 +1,149 @@
+/* cascading style sheet for dlx websites */
+
+body {
+	background: #e0e0e0;
+}	
+
+table.header {
+	margin-left: 2%;
+	margin-right: 2%;
+	background: #000066;
+}
+
+td {
+	font-size: 12pt;
+	vertical-align: middle;
+	font-weight: 400;
+}
+
+td.logo {
+	font-size: 16pt;
+	color: #ffffff;
+}
+
+td.motto {
+	font-size: 10pt;
+	font-style: italic;	
+	color: #ffffff;
+}
+
+td.banner {
+	color: #ffffff;
+}
+
+a:link, a:visited {
+	color: #0000ff;
+	text-decoration: underline;
+}
+
+a:hover {
+	color: #800080;
+}
+
+h1 {
+	color: #ff0000;
+	text-decoration: underline;
+	font-size: 16pt;
+	font-weight: 400;
+}
+
+div.error {
+	color: red;
+}
+
+.code {
+	font-family: monospace;
+	font-style: normal;
+	color: purple;
+}
+
+code {
+	color: purple;
+	font-style: normal;
+}
+
+.comment {
+	color: black;
+	margin-left: 1em;
+	font-family: serif;
+	font-style: italic;
+}
+
+.br {
+	border-right: solid 1px black;
+}
+
+.bd {
+	border-bottom: solid 1px black;
+}
+
+.brd {
+	border-right: solid 1px black;
+	border-bottom: solid 1px black;
+}
+
+.blrd {
+	border-left: solid 1px black;
+	border-right: solid 1px black;
+	border-bottom: solid 1px black;
+}
+
+.brgd {
+	border-right: solid 1px #ccc;
+	border-bottom: solid 1px black;
+}
+
+th {
+	font-family: serif;
+	font-size: 12pt;
+	color: #000066;
+	vertical-align: top;
+}
+
+b {
+	color: #000066;
+}
+
+p {
+	text-align: justify;
+}
+
+.codebr {
+	border-right: solid 1px black;
+	color: red;
+	font-style: normal;
+}
+
+.codebrd {
+	border-bottom: solid 1px black;
+	border-right: solid 1px black;
+	color: red;
+	font-style: normal;
+}
+
+.codebrg {
+	border-right: solid 1px #ccc;
+	color: red;
+	font-style: normal;
+}
+
+.codebrdg {
+	border-right: solid 1px #ccc;
+	border-bottom: solid 1px black;
+	color: red;
+	font-style: normal;
+}
+
+img.left {
+	float: left;
+	margin-right: 20px;
+}
+
+img.right {
+	float: right;
+	margin-left: 20px;
+}
+
+li {
+	margin-left: 20px;
+}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for HTML5 for Windows version 5.2.0">
+  <meta charset="utf-8">
+  <title>VivioJS cache help</title>
+  <meta name="Author" content="jones@scss.tcd.ie">
+  <meta name="description" content="Vivio cache description and animation">
+  <meta name="keywords" content="Vivio, animation, cache, description">
+  <script src="../analytics.js">
+  </script>
+  <script src="../funcs.js">
+  </script>
+  <script src="../vivio.js">
+  </script>
+  <script src="cache.js">
+  </script>
+</head>
+<body style="background-color:#e0e0e0;">
+  <script>
+    header("Cache Animation");
+  </script>
+  <table style="margin-left:5%; width:90%;" border="0" cellspacing="0" cellpadding="5">
+    <tr>
+      <td height="40">
+        <p style="text-align:justify;"><br>
+        This Vivio animation is designed to understand the operation of a CPU cache.</p>
+        <p style="text-align:justify;">A sequence of addresses is fed through a software model of a cache. The sequence is selected by pressing the appropriate
+        button and can be (i) the addresses given in <a href="t3.doc">CS3021/3421 tutorial 3</a>, (ii) a repetitive sequence of 5 sequential addresses and
+        (iii) a set of random addresses. The repetitive sequence can be used to show that, in some circumstances, a direct mapped cache can have a better
+        hit-rate than a fully associative cache.</p>
+        <p style="text-align:justify;">The organisation of the cache is specified by three parameters L, K and N which can be set by pressing the appropriate
+        buttons. Only a subset of values are allowed as drawing large caches on a small screen is impractical. L is the number of bytes stored per cache line,
+        K the cache associativity and N the number of sets. K=1 indicates a direct mapped cache and N=1 a fully associative cache. The cache size is L×K×N
+        bytes.<br></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align:center; color:red;">
+        <div style="position:relative; ">
+          <!-- tabindex needed for keyboard input -->
+          <canvas id="canvas" tabindex="1" style="width:100%; height:620px; overflow:hidden; display:block;">
+            No canvas support
+          </canvas>
+        </div>
+        Click on diagram to activate animation or <a href="cache.htm">here</a> for a full screen version.
+      </td>
+    </tr>
+    <tr>
+      <td height="40">
+        <p style="text-align:justify;"><br>
+        The simulation is started and stopped by pressing the button marked "start" or "stop". The simulation is reset back to the beginning by pressing the
+        "reset" button and the simulation speed can be speeded up and slowed down in a cyclic fashion by pressing the button marked "xx ticks/s". The animation
+        can also be controlled by pressing the right-hand mouse button on the window background.</p>
+        <p style="text-align:justify;">The cache is organised as a matrix of N×K tags together with a corresponding matrix of N×K cache lines. Each cache line
+        holds L data bytes.</p>
+        <p style="text-align:justify;">An incoming address is split into 3 fields. The low order log2(L) bits give the byte offset within a cache line (always
+        4 byte aligned in simulation), the next log2(N) bits selects the set and the remaining high order bits are used as the address tag. The address tag is
+        compared, in parallel, with all K tags of the selected set. If a match is found then we have a hit, otherwise a miss.</p>
+        <p style="text-align:justify;">On a hit, the tags are re-ordered on a least recently used (LRU) basis. This is illustrated by using darker shades of
+        gray for the older tags.</p>
+        <p style="text-align:justify;">On a miss, a complete cache line (L bytes) is read from main memory and placed in the set's least recently used cache
+        line. The corresponding tag and the tag ordering are updated.</p>
+        <p style="text-align:justify;">The selected word (32 bits) from the cache line is returned to the CPU.<br></p>
+      </td>
+    </tr>
+  </table><br>
+  <script>
+  vplayer = new VPlayer("canvas", cache);
+  footer("caches");
+  </script>
+</body>
+</html>

@@ -1,0 +1,1406 @@
+<!--
+	To convert tutorial.htm to printable.htm:
+
+	o Copy tutorial.html to printable.html
+	o Change the stylesheet (in the header) to printable.css
+	o Find&Replace all occurrences of "images/" by "images/printable/"
+	o Remove the link to the printable version (beginning of the document)
+-->
+
+<html>
+
+	<head>
+		<title>Introduction to the MIPS Processor</title>
+		<link rel="stylesheet" type="text/css" href="vivio.css">
+		<script src="../analytics.js"></script>
+		<script src="../funcs.js"></script>
+	</head>
+
+	<body>
+  		<script>
+        	header("DLX/MIPS Tutorial &copy; 2016 Edsko De Vries");
+  		</script>
+
+		<table width="96%" align="center" style="border-collapse:collapse" cellpadding="5px">
+			<tr>
+			<td colspan="2">
+			<h1>Introduction</h1>
+			<blockquote>
+				<p>This tutorial makes use of the Vivio animation of a
+				<a href="../vivio.htm">DLX/MIPS</a> processor.</p>
+				<p>The processor we will be considering in this tutorial is the MIPS processor. The MIPS processor, designed in
+			1984 by researchers at Stanford University, is a <b>RISC</b> (Reduced Instruction Set Computer) processor.
+			Compared with their <b>CISC</b> (Complex Instruction Set Computer) counterparts (such as the Intel Pentium
+			processors), RISC processors typically support fewer and much simpler instructions.
+				</p>
+				<p>The premise is, however, that a RISC processor can be made much faster than a CISC processor because of its
+			simpler design.  These days, it is generally accepted that RISC processors are more efficient than CISC
+			processors; and even the only popular CISC processor that is still around (Intel Pentium) internally translates
+			the CISC instructions into RISC instructions before they are executed [<a href="#bib1">1</a>].
+				</p>
+				<p>RISC processors typically have a <b>load-store architecture</b>. This means there are two instructions for
+			accessing memory: a load (<code>l</code>) instruction to load data from memory and a store (<code>s</code>)
+			instruction to write data to memory. It also means that none of the other instructions can access memory
+			directly. So, an instruction like "add this byte from memory to register&nbsp;1" from a CISC instruction set would
+			need two instructions in a load-store architecture: "load this byte from memory into register&nbsp;2" and "add
+			register&nbsp;2 to register&nbsp;1". </p>
+				<p>CISC processors also offer many different <b>addressing modes</b>. Consider the following instruction from the
+			Intel 80x86 instruction set (with simplified register names):
+			</p>
+				<p class="code">add r1, [r2+r3*4+60]	<span class="comment">//
+				<i>i</i>86 (not MIPS) example</span> </p>
+				<p>This instruction loads a value from memory and adds it to a register. The memory location is given in between
+			the square brackets. As you can see, the Intel instruction set, as is typical for CISC architectures, allows
+			for very complicated expressions for address calculations or "addressing modes". The MIPS processor, on the
+			other hand, only allows for one, rather simple, addressing mode: to specify an address, you can specify a
+			constant and a register. So, the above Intel instruction could be translated as:
+				</p>
+				<p class="code">slli r3, r3, 2&nbsp; <span class="comment">//
+				<code>r3</code> := <code>r3</code> &lt;&lt; 2 (i.e. <code>r3</code> :=
+				<code>r3</code> * 4)</span> <br>add&nbsp; r2, r2, r3
+				<span class="comment">// <code>r2</code> := <code>r2</code> +
+				<code>r3</code></span> <br>l&nbsp;&nbsp;&nbsp; r4, 60(r2)
+				<span class="comment">// <code>r4</code> := memory[60+<code>r4</code>]</span>
+				<br>add&nbsp; r1, r1, r4 <span class="comment">// <code>r1</code> :=
+				<code>r1</code> + <code>r4</code></span> <br></p>
+				<p>We need four instructions instead of one, and an extra register (<code>r4</code>) to do what can be done with
+			one instruction in a CISC architecture. The internal circuitry of the RISC processor is much simpler, however,
+			and can thus be made very fast. How this is done, is the topic of this tutorial.
+				</p>
+			</blockquote>
+
+			<h1><span style="text-decoration: none">Basic Processor Architecture</span></h1>
+
+			<blockquote>
+				<p>The execution of an instruction in a processor can be split up into a number of stages. How many stages there
+			are, and the purpose of each stage is different for each processor design. Examples includes 2 stages
+			(Instruction Fetch / Instruction Execute) and 3 stages (Instruction Fetch, Instruction Decode, Instruction
+			Execute). The MIPS processor has 5 stages:
+			</p>
+			</blockquote>
+
+			<table style="margin-left: 5%; margin-right: 5%">
+			<tr>
+				<td><b>IF</b></td>
+				<td>
+					The Instruction Fetch stage fetches the next instruction from memory using the address in the
+					<code>PC</code> (Program Counter) register and stores this instruction in the <code>IR</code>
+					(Instruction Register)
+				</td>
+			</tr>
+			<tr>
+				<td><b>ID</b></td>
+				<td>
+					The Instruction Decode stage decodes the instruction in the <code>IR</code>, calculates the next
+					<code>PC</code>, and reads any operands required from the register file.
+				</td>
+			</tr>
+			<tr>
+				<td><b>EX</b></td>
+				<td>
+					The Execute stage "executes" the instruction. In fact, all ALU operations are done in this stage. (The
+					ALU is the Arithmetic and Logic Unit and performs operations such as addition, subtraction, shifts left
+					and right, etc.)
+				</td>
+			</tr>
+			<tr>
+				<td><b>MA</b></td>
+				<td>
+					The Memory Access stage performs any memory access required by the current instruction, So, for loads, it
+					would load an operand from memory. For stores, it would store an operand into memory. For all other
+					instructions, it would do nothing.
+				</td>
+			</tr>
+			<tr>
+				<td><b>WB</b></td>
+				<td>
+					For instructions that have a result (a destination register), the Write Back writes this result back to
+					the register file. Note that this includes nearly all instructions, except <code>nop</code>s (a
+					<code>nop</code>, no-op or no-operation instruction simply does nothing) and <code>s</code> (stores).
+				</td>
+			</tr>
+			</table>
+
+			<blockquote>
+				<p>Consider the execution of the following program and try to consider the operation of each of the 5 processor
+			stages (IF, ID, EX, MA and WB) for each individual instruction. (Note that register
+				<code>r0</code> in the MIPS
+			processor is always 0).
+			</p>
+				<p class="code">l&nbsp;&nbsp; r1, 0(r0)&nbsp;
+				<span class="comment">// <code>r1</code> := memory[0]</span> <br>l&nbsp;&nbsp; r2, 1(r0)&nbsp;
+				<span class="comment">// <code>r2</code> := memory[1]</span> <br>add r3, r1, r2
+				<span class="comment">// <code>r3</code> := <code>r1</code> +
+				<code>r2</code></span> <br>s&nbsp;&nbsp; 2(r0), r3&nbsp;
+				<span class="comment">// memory[2] := <code>r3</code></span> <br>
+				</p>
+				<p><b>Try it out</b>.
+			Follow
+			the execution of this program in the
+				<a target="_blank" href="showanim.php?name=Tutorial01">MIPS animation</a> and check if you
+			were right. If you don't understand each and every bit of the diagram yet, don't despair - each stage will be
+			explained separately and in detail in the next section.
+			</p>
+			</blockquote>
+
+			<h1><span style="text-decoration: none">Details of the Processor Stages</span></h1>
+
+			<blockquote>
+				<p><img src="images/np_if.jpg" class="right">As I said before, the
+				<b>Instruction Fetch</b> phase fetches the next instruction. First, it sends the
+				contents of the <code>PC</code> register, which contains the address for the next instruction, to the
+				instruction memory (1).  The instruction memory will then respond by sending the correct instruction. This
+				instruction is sent on to the next (instruction decode) phase (2).
+				</p>
+				<p>The instruction decode phase will calculate the next PC and will send it back to the IF phase (4) so that
+				the IF phase knows which instruction to fetch next.  To be able to execute a
+				<code>jr</code> instruction
+				(which changes the PC to the contents of a register), we also need a connection from the register file to
+				the PC (5).
+			</p>
+				<p>One of these (4 or 5) is then selected (MUX1) to update the PC on the next rising clock edge.  The control
+				line for MUX1 (not shown on the diagram) would also come from the ID phase, and is based on instruction
+				type.
+			</p>
+				<p><img src="images/np_id.jpg" class="left">
+				The <b>Instruction Decode</b> phase then has two main tasks: calculate the next PC and fetch the
+				operands for the current instruction. There are three possibilities for the next PC.
+				</p>
+				<ol>
+					<li>For the most common case, for all "normal" (meaning instructions that are not branches or jumps), we must
+				simply calculate PC+4 to get the address of the next instruction (3, ADD4).
+					</li>
+					<li>For jumps and branches (if the branch is taken), we might also have to add some immediate value (the branch
+				offset) to the PC (ADDi). This branch offset is encoded in the instruction itself (6).
+					</li>
+					<li>For the <code>jr</code> and <code>jalr</code> instructions, we need to use the value of a register instead.
+					</li>
+				</ol>
+				<p>MUX3 selects between the first two posibilities (+4 or +immediate), and MUX1 (in the IF phase) selects
+				between MUX3 and the third posibility (value from the register file). The control line for MUX3 comes from a
+				zero-detector (not shown), which in turn gets its input from the register file (thin line marked "a"). The
+				control line for MUX1 is not shown and is based on the instruction type.
+				</p>
+				<p>Then, the second main task is to fetch the operands for the next instruction. These operands come from the
+				register file for all but two instructions (7, 8).  The two instructions that are the exception are
+				<code>jal</code> and <code>jalr</code>. These two jump instructions save the address of the next instruction
+				in a destination register, so instead of sending an operand from the register file, we need to send the
+				contents of the PC+4 (10).
+			</p>
+				<p>MUX5 selects between (7) and (10). Again, the control line for this MUX (not shown) would also come
+				from the ID phase, and is be based on the instruction type. </p>
+				<p><img src="images/np_ex.jpg" class="right">
+				The <b>Execution</b> phase "executes" the instruction. Any calculations necessary are done in this
+				phase. These calculations are all done by the ALU (Arithmetic and Logic Unit). The internals of these
+				unit is beyond the scope of this tutorial, but you should find an explanation of this unit in any
+				elementary book on digital logic, see for example [<a href="#bib2">2</a>].
+				</p>
+				<p>Conceptually this stage is very simple. The ALU needs two operands. These either come from the ID
+				phase (8, 9) and thus in turn from the register file (or PC+4 for jump and link instructions), or one
+				operand comes from the ID phase (8) and the other comes from the instruction register (6) to supply
+				an immediate value. </p>
+				<p>MUX7 selects between (9) and (6). The control line for this MUX is not shown, but would come from
+				the ID phase and is based on the instruction type (it will select (9) for instructions that operate on two
+				registers, and (6) for instructions that work one one register and one immediate value).
+				</p>
+				<p>(11) is used for the <code>s</code> (store instruction). Consider the following instruction:
+				</p>
+				<p class="code">s 10(r0), r2 <span class="comment">// memory[10+<code>r0</code>] :=
+				<code>r2</code></span> </p>
+				<p>The calculation 10+<code>r0</code> will be done by the ALU (so which source does MUX7 select?), and the
+			result of this calculation will be passed on to the MA stage (12). In the MA phase, however, we will also
+			need to know the contents of <code>r2</code>. This is why we need (11).
+				</p>
+				<p><img src="images/np_ma.jpg" class="left">
+				The purpose of the <b>Memory access</b> phase is to store operands into memory or load operands from memory.
+				So, for all instructions except loads and stores, the MA simply passes on the value from the ALU on to the
+				WB stage (12, 16). </p>
+				<p>For loads and stores, the MA needs to send the effective address calculated by the ALU to memory
+				(13).  For loads, the memory will then respond by sending the requested data back (15).  For stores, we need
+				to send the data to be stored along with the effective address (11, 14), and the memory will respond by
+				updating itself. </p>
+				<p>Finally, MUX9 will select between (12) and (15) for the input for (16). As per usual, this decision would be
+				based on the instruction type and the control line would come from the ID phase (not shown).
+				</p>
+				<p><img src="images/np_wb.jpg" class="right">
+			The <b>Write Back</b> phase, finally, is a very simple one. It simply takes the output of the MA phase (..), and sends it back to the write back phase to store the result into the destination register.
+				</p>
+				<p>For stores (and no-ops), the write-back does nothing.
+			</p>
+				<p><b>Try it out</b>.
+			Watch the execution of
+				<a target="_blank" href="showanim.php?name=Tutorial02">example 1</a>,
+				<a target="_blank" href="showanim.php?name=Tutorial03">example 2</a> and
+				<a target="_blank" href="showanim.php?name=tutorial4">example 3</a> and
+			see if you can understand the operation of each processor stage.
+			</p>
+			</blockquote>
+			<h1><br>
+			Pipelining the Processor</h1>
+			<blockquote>
+				<p>If you have watched the execution of your programs carefully, you will have noticed that only one stage is
+			active at any given moment. First, the IF stage fetches the instruction. Then, the ID phase decodes the
+			instruction and fetches the operands, while the IF phase is idle. Then the EX phase executes the instruction
+			while both IF and ID are idle. And so forth. Also, the <b>clock period</b> is really long: it must be long enough to
+			allow an instruction to propagate through all 5 stages.
+			</p>
+				<p>An obvious method to speed up the processor is to make the individual pipeline stages work in parallel. So,
+			when the ID phase is decoding an instruction <i>i</i>, the IF phase would be fetching the next instruction
+				<i>i</i> + 1 in parallel. On the next clock cycle, the EX phase would execute instruction
+				<i>i</i>, the ID
+			phase would decode instruction <i>i</i> + 1 and the IF phase would fetch instruction
+				<i>i</i> + 2. This
+			technique is called <b>pipelining</b>.
+			</p>
+				<p>For this to work, each phase needs it's own set of registers to hold the instruction and instruction operands.
+			This is necessary because each stage will be working on a <i>different</i> instruction. But inserting
+			registers in between the different phases has a huge advantage: the clock period can now be much shorter.
+			Indeed, we only need to allow for an instruction to make it through one stage of the processor, instead of all
+			5. So, at least in theory, we can clock the processor 5 times faster. Shown visually:
+				</p>
+				<blockquote>
+					<table>
+						<tr>
+							<td>
+							<h1>No pipelining</h1></td>
+							<td>
+							<h1>With pipelining</h1></td>
+						</tr>
+						<tr>
+							<td>
+							<table class="code" cellspacing="0" cellpadding="3">
+								<tr>
+									<th class="brd">Cycle</th>
+									<th class="brd">IF</th>
+									<th class="brd">ID</th>
+									<th class="brd">EX</th>
+									<th class="brd">MA</th>
+									<th class="bd">WB</th>
+								</tr>
+								<tr>
+									<th class="br">1</th>
+									<td class="br"><b>i</b></td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+								</tr>
+								<tr>
+									<th class="br">&nbsp;</th>
+									<td class="br">&nbsp;</td>
+									<td class="br"><b>i</b></td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+								</tr>
+								<tr>
+									<th class="br">&nbsp;</th>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+									<td class="br"><b>i</b></td>
+									<td class="br">&nbsp;</td>
+								</tr>
+								<tr>
+									<th class="br">&nbsp;</th>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+									<td class="br"><b>i</b></td>
+								</tr>
+								<tr>
+									<th class="brd">&nbsp;</th>
+									<td class="brd">&nbsp;</td>
+									<td class="brd">&nbsp;</td>
+									<td class="brd">&nbsp;</td>
+									<td class="brd">&nbsp;</td>
+									<td class="bd"><b>i</b></td>
+								</tr>
+								<tr>
+									<th class="br">2</th>
+									<td class="br">i+1</td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+								</tr>
+								<tr>
+									<th class="br">&nbsp;</th>
+									<td class="br">&nbsp;</td>
+									<td class="br">i+1</td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+								</tr>
+								<tr>
+									<th class="br">&nbsp;</th>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+									<td class="br">i+1</td>
+									<td class="br">&nbsp;</td>
+								</tr>
+								<tr>
+									<th class="br">&nbsp;</th>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+									<td class="br">i+1</td>
+								</tr>
+								<tr>
+									<th class="br">&nbsp;</th>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+									<td>i+1</td>
+								</tr>
+							</table></td>
+							<td>
+							<table class="code" cellspacing="0" cellpadding="3">
+								<tr>
+									<th class="brd">Cycle</th>
+									<th class="brd">IF</th>
+									<th class="brd">ID</th>
+									<th class="brd">EX</th>
+									<th class="brd">MA</th>
+									<th class="bd">WB</th>
+								</tr>
+								<tr>
+									<th class="br">1</th>
+									<td class="br"><b>i</b></td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+								</tr>
+								<tr>
+									<th class="br">2</th>
+									<td class="br">i+1</td>
+									<td class="br"><b>i</b></td>
+									<td class="br">&nbsp;</td>
+									<td class="br">&nbsp;</td>
+								</tr>
+								<tr>
+									<th class="br">3</th>
+									<td class="br">i+2</td>
+									<td class="br">i+1</td>
+									<td class="br"><b>i</b></td>
+									<td class="br">&nbsp;</td>
+								</tr>
+								<tr>
+									<th class="br">4</th>
+									<td class="br">i+3</td>
+									<td class="br">i+2</td>
+									<td class="br">i+1</td>
+									<td class="br"><b>i</b></td>
+								</tr>
+								<tr>
+									<th class="brd">5</th>
+									<td class="brd">i+4</td>
+									<td class="brd">i+3</td>
+									<td class="brd">i+2</td>
+									<td class="brd">i+1</td>
+									<td class="bd"><b>i</b></td>
+								</tr>
+								<tr>
+									<th class="br">6</th>
+									<td class="br">i+5</td>
+									<td class="br">i+4</td>
+									<td class="br">i+3</td>
+									<td class="br">i+2</td>
+									<td>i+1</td>
+								</tr>
+								<tr>
+									<th class="br">7</th>
+									<td class="br">i+6</td>
+									<td class="br">i+5</td>
+									<td class="br">i+4</td>
+									<td class="br">i+3</td>
+									<td>i+2</td>
+								</tr>
+								<tr>
+									<th class="br">8</th>
+									<td class="br">i+7</td>
+									<td class="br">i+6</td>
+									<td class="br">i+5</td>
+									<td class="br">i+4</td>
+									<td>i+3</td>
+								</tr>
+								<tr>
+									<th class="br">9</th>
+									<td class="br">i+8</td>
+									<td class="br">i+7</td>
+									<td class="br">i+6</td>
+									<td class="br">i+5</td>
+									<td>i+4</td>
+								</tr>
+								<tr>
+									<th class="br">10</th>
+									<td class="br">i+9</td>
+									<td class="br">i+8</td>
+									<td class="br">i+7</td>
+									<td class="br">i+6</td>
+									<td>i+5</td>
+								</tr>
+							</table></tr>
+					</table>
+				</blockquote>
+				<p>There are two observations to be made here. First of all, instruction
+				<i>i</i> takes 1 (long) clock cycle in
+			the non-pipelined processor, and it takes 5 (short) clock cycles in the pipelined processor. Note that this
+			"short" cycle is 1/5 of the "long" cycle, so it actually takes just as long to execute an instruction in the
+			non-pipelined version as it does in the pipelined version.
+			</p>
+				<p>The point is, however, that even though it takes just as long to execute
+				<i>one</i> instruction, both
+			processors finish the execution of an instruction <i>after every clock cycle</i>. Instruction
+				<i>i</i>+1
+			finishes one clock cycle after instruction <i>i</i> for both processors. BUT: the clock cycle for the pipelined
+			processor is a fifth of the clock cycle for the non-pipelined processor. Hence, the
+				<b>throughput</b>, the
+			number of instructions executed per unit time, is 5 times higher for the pipelined processor than it is for the
+			non-pipelined processor. In other words, the pipelined processor is 5 times faster than the non-pipelined
+			processor.
+			</p>
+				<p><b>Try it out</b>.
+			To illustrate this point, watch the execution of a single instruction in the
+				<a target="_blank" href="showanim.php?name=Tutorial05">non-pipelined</a> and in the
+				<a target="_blank" href="showanim.php?name=Tutorial06">pipelined</a> processor. Notice that in the pipelined processor, the clock
+			period is much shorter, and every stage now has its own set of registers. Also note that despite this, the
+			instruction takes the same time to execute in either processor.
+			</p>
+				<p><b>Try it out</b>.
+			Then consider the following simple program and watch the execution in both the
+				<a target="_blank" href="showanim.php?name=Tutorial07">non-pipelined</a> and the
+				<a target="_blank" href="showanim.php?name=Tutorial08">pipelined</a> processor and compare execution speed. You should notice that
+			it takes 6 long cycles to execute the program in the non-pipelined processor, and 10 short cycles to execute
+			the program in the pipelined processor.
+			</p>
+				<p class="code">addi r1, r0, 4&nbsp; <span class="comment">//
+				<code>r1</code> := 4</span> <br>addi r2, r0, 5&nbsp;
+				<span class="comment">// <code>r2</code> := 5</span> <br>addi r3, r0, 6&nbsp;
+				<span class="comment">// <code>r3</code> := 6</span> <br>slli r1, r1, 2&nbsp;
+				<span class="comment">// <code>r1</code> := <code>r1</code> &lt;&lt; 2 (<code>r1</code> :=
+				<code>r1</code> * 4)</span> <br>subi r2, r2, 3&nbsp;
+				<span class="comment">// <code>r2</code> := <code>r2</code> - 3</span>
+				<br>add&nbsp; r3, r3, r3 <span class="comment">// <code>r3</code> :=
+				<code>r3</code> + <code>r3</code></span> <br></p>
+			</blockquote>
+			<h1>Data Hazards</h1>
+			<blockquote>
+				<p>Of course, it is not as simple as it seems (is anything ever?). The above program was carefully chosen for the
+			pipelining to work. Consider the following code fragment:
+			</p>
+				<p class="code">add <b>r1</b>, r2, r3 <span class="comment">//
+				<code>r1</code> := <code>r2</code> + <code>r3</code></span> <br>sub r3,
+				<b>r1</b>, r2 <br>xor r3, <b>r1</b>, r2 <br>srl r3, <b>r1</b>, r2
+				<br>ori r3, <b>r1</b>, 10 <br></p>
+				<p>If we look at the pipeline during the executing of these instructions,
+			we see:
+			</p>
+				<table class="code" cellspacing="0" cellpadding="3">
+					<tr>
+						<th class="brd">Cycle</th>
+						<th class="brd">IF</th>
+						<th class="brd">ID</th>
+						<th class="brd">EX</th>
+						<th class="brd">MA</th>
+						<th class="brd">WB</th>
+					</tr>
+					<tr>
+						<th class="br">1</th>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">2</th>
+						<td class="br">sub</td>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">3</th>
+						<td class="br">xor</td>
+						<td class="br">sub</td>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">4</th>
+						<td class="br">srl</td>
+						<td class="br">xor</td>
+						<td class="br">sub</td>
+						<td class="br">add</td>
+					</tr>
+					<tr>
+						<th class="br">5</th>
+						<td class="br">ori</td>
+						<td class="br">srl</td>
+						<td class="br">xor</td>
+						<td class="br">sub</td>
+						<td>add</td>
+					</tr>
+					<tr>
+						<th class="br">6</th>
+						<td class="br">&nbsp;</td>
+						<td class="br">ori</td>
+						<td class="br">srl</td>
+						<td class="br">xor</td>
+						<td>sub</td>
+					</tr>
+				</table>
+				<p>In cycle 3, the <code>sub</code> instruction reads the value of register
+				<code>r0</code>. The
+			<code>add</code> instruction, however, whose destination register is
+				<code>r0</code>, has not reached the write-back
+			phase yet. Hence, the <code>sub</code> will read the wrong value for
+				<code>r0</code>!
+			</p>
+				<p>This situation is called a <b>data hazard</b>. There is another data hazard cycle 4 (which instructions?). The
+				<code>srl</code> in cycle 5 is OK, because the <code>add</code> will write the result back to the register file
+			in the first half of the clock cycle, and the <code>srl</code> will read its operands in the second half of the
+			clock cycle (<b>two phase memory access</b>). It should be clear that the
+				<code>ori</code> in cycle 6 is OK too - the
+			<code>add</code> has finished execution completely in this cycle.
+				</p>
+				<p>The easiest solution is to ignore the problem. While that might sound like a bad solution, it is actually quite
+			usable. Consider the above program again, and assume that <code>r1</code> is initially 1, and
+				<code>r2</code>
+			is initially 2. Then:
+			</p>
+				<p class="code">add r0, r1, r2 <span class="comment">// <code>r0</code> := 3</span>
+				<br>sub r2, r0, r1 <span class="comment">// <code>r2</code> := -1 (uses old value of
+				<code>r0</code>)</span> <br>xor r2, r0, r1 <span class="comment">//
+				<code>r2</code> := 1 (uses old value of <code>r0</code>)</span>
+				<br>srl r2, r0, r1 <span class="comment">// <code>r2</code> := 6 (uses new value of
+				<code>r0</code>)</span> <br>ori r2, r0, 10 <span class="comment">//
+				<code>r2</code> := 11 (uses new value of <code>r0</code>)</span>
+				<br></p>
+				<p>It becomes a bit harder to read the source code, because the processor
+				<i>seems</i> to execute instructions out
+			of order. But as long as this behaviour is well-defined, the programmer (or the compiler) can take it into
+			account and make good use of it. (Note that the processor does not
+				<i>really</i> execute instructions out of
+			order.)
+			</p>
+				<p><b>Try it out</b>. Follow the execution of this program in the
+				<a target="_blank" href="showanim.php?name=Tutorial09">MIPS
+			pipeline</a>.
+			</p>
+			</blockquote>
+
+			<h1><span style="text-decoration: none">Pipeline Interlocks</span></h1>
+
+			<blockquote>
+				<p>A second solution is to <b>stall</b> the pipeline. To explain what a stall is, we need a bit of extra
+			terminology. We can divide the pipeline into two parts, instruction fetch and instruction execute:
+				</p>
+				<table cellspacing="0" cellpadding="2">
+					<tr>
+						<th colspan="2" class="brd">Instruction Fetch</th>
+						<th colspan="3" class="bd">Instruction Execute</th>
+					</tr>
+					<tr>
+						<td>IF</td>
+						<td class="br">ID</td>
+						<td>EX</td>
+						<td>MA</td>
+						<td>WB</td>
+					</tr>
+				</table>
+				<p>When an instruction makes it from the first half of this pipeline to
+			the second half, i.e. from the ID phase to the EX phase, it is said to
+			be <b>issued</b>. On a stall, we do not issue the instruction in the ID
+			phase. Instead, we issue a NOP ("do nothing") instruction. In the
+			meantime, the IF and and ID phase will simply re-execute (we shall
+			later see that it is is not <a href="#controlhazards">quite as
+			simple</a> as that). The above program would be executed as
+			follows:
+			</p>
+				<table class="code" cellspacing="0" cellpadding="2">
+					<tr>
+						<th class="brd">Cycle</th>
+						<th class="brd">IF</th>
+						<th class="brd">ID</th>
+						<th class="brd">EX</th>
+						<th class="brd">MA</th>
+						<th class="bd">WB</th>
+					</tr>
+					<tr>
+						<th class="br">1</th>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">2</th>
+						<td class="br">sub</td>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">3</th>
+						<td class="br">xor</td>
+						<td class="br">sub</td>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td></td>
+						<td class="comment">We detect a stall here, and issue a
+						<code>nop</code> instead
+						of the <code>sub</code> </td>
+					</tr>
+					<tr>
+						<th class="br">4</th>
+						<td class="br">xor</td>
+						<td class="br">sub</td>
+						<td class="br"><b>nop</b></td>
+						<td class="br">add</td>
+						<td></td>
+						<td class="comment">The <code>add</code> has not yet reached WB, so we need
+						another stalled cycle
+					</td>
+					</tr>
+					<tr>
+						<th class="br">5</th>
+						<td class="br">xor</td>
+						<td class="br">sub</td>
+						<td class="br"><b>nop</b></td>
+						<td class="br"><b>nop</b></td>
+						<td>add</td>
+						<td class="comment">The <code>add</code> will write its results in the first half
+						of the cycle, so the <code>xor</code> will now get the correct
+						value for <code>r0</code> </td>
+					</tr>
+					<tr>
+						<th class="br">6</th>
+						<td class="br">srl</td>
+						<td class="br">xor</td>
+						<td class="br">sub</td>
+						<td class="br"><b>nop</b></td>
+						<td><b>nop</b></td>
+					</tr>
+				</table>
+				<p>The downside is that with this solution, we need 7 cycles instead of 5 to execute
+			our program. That's a 40% increase in execution time!
+			</p>
+				<p><b>Try it out</b>. Run this program in the
+				<a target="_blank" href="showanim.php?name=Tutorial10">animation</a>.
+			For clarity, the MIPS animation will issue a "<code>stall</code>" instruction instead of a
+				<code>nop</code> instruction upon a stall. This is only to distinguish
+				<code>nop</code>s issued because of
+			stalls from <code>nop</code>s that were actually in the instruction memory. In reality, the
+				<code>stall</code>
+			instruction does not exist.
+			</p><img src="images/alu_f.jpg" class="right">
+			</blockquote>
+			<h1><span style="text-decoration: none">ALU Forwarding</span></h1>
+			<blockquote>
+				<p>We want to be able to use the result of the ALU directly, without
+			having to wait for the result to be written back to the register file.
+			For this, we need to forward the result of the ALU directly back into
+			the ALU. </p>
+				<p>Before the result gets written to the destination register, it
+			is written into the intermediate registers OUT0 and OUT1 first (see
+			diagram). We need to forward the contents of OUT0 and OUT1 back
+			into the input of the ALU (connections marked 1a and 1b
+			connect OUT0 to the ALU, and connections marked 2a and 2b connect OUT1
+			to the ALU). Of course, we then also need a
+			multiplexer to select the right operand (MUX6 and MUX7). </p>
+				<p>With this solution, there are no more stalls, and the code is executed
+			the way you would expect from reading the source code. If you don't
+			understand it, try the
+				<a target="_blank" href="showanim.php?name=Tutorial11">animation</a> - it should become clear.
+				</p>
+			</blockquote>
+			<h1>Load Hazards</h1>
+			<blockquote>
+				<p>Consider the following code fragment.</p>
+				<p class="code">l&nbsp;&nbsp; <b>r1</b>, 1(r2)
+				<span class="comment">// Load the value at address 1+<code>r2</code> into
+				<code>r1</code></span> <br>add r3, <b>r1</b>, r2
+			</p>
+				<p>How is this executed in the pipeline?
+			</p>
+				<table class="code" cellpadding="2" cellspacing="0">
+					<tr>
+						<th class="brd">Cycle</th>
+						<th class="brd">IF</th>
+						<th class="brd">ID</th>
+						<th class="brd">EX</th>
+						<th class="brd">MA</th>
+						<th class="bd">WB</th>
+					</tr>
+					<tr>
+						<th class="br">1</th>
+						<td class="br">lb</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">2</th>
+						<td class="br">add</td>
+						<td class="br">lb</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">3</th>
+						<td class="br">&nbsp;</td>
+						<td class="br">add</td>
+						<td class="br">lb</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">4</th>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">add</td>
+						<td class="br">lb</td>
+					</tr>
+					<tr>
+						<th class="br">5</th>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">add</td>
+						<td>lb</td>
+					</tr>
+				</table>
+				<p>Again, the <code>lb</code> will only write the value from memory into
+			the register file in the WB phase, whereas the <code>add</code>
+			retrieves its operands in the ID phase. Thus, the <code>add</code> will
+			actually use an old value of <code>r1</code>. As before, we could
+			ignore this problem and call it a feature, and that would be fine. We
+			could also stall the pipeline for two cycles:
+			</p>
+				<table class="code" cellpadding="2" cellspacing="0">
+					<tr>
+						<th class="brd">Cycle</th>
+						<th class="brd">IF</th>
+						<th class="brd">ID</th>
+						<th class="brd">EX</th>
+						<th class="brd">MA</th>
+						<th class="bd">WB</th>
+					</tr>
+					<tr>
+						<th class="br">1</th>
+						<td class="br">lb</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">2</th>
+						<td class="br">add</td>
+						<td class="br">lb</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">3</th>
+						<td class="br">&nbsp;</td>
+						<td class="br">add</td>
+						<td class="br">lb</td>
+						<td class="br">&nbsp;</td>
+						<td></td>
+						<td class="comment">We detect a stall, issue a <code>nop</code>
+					instead of the <code>add</code> </td>
+					</tr>
+					<tr>
+						<th class="br">4</th>
+						<td class="br">&nbsp;</td>
+						<td class="br">add</td>
+						<td class="br"><b>nop</b></td>
+						<td class="br">lb</td>
+						<td></td>
+						<td class="comment">And another one</td>
+					</tr>
+					<tr>
+						<th class="br">5</th>
+						<td class="br">&nbsp;</td>
+						<td class="br">add</td>
+						<td class="br"><b>nop</b></td>
+						<td class="br"><b>nop</b></td>
+						<td>lb</td>
+					</tr>
+				</table>
+				<p>The <code>lb</code> will write its result into OUT1 before it
+			is written to the register file, however, so if we use
+				<a href =
+			"#forwarding">pipeline forwarding</a>, and we forward the result of
+			OUT1 directly back to the ALU, we can reduce this to a one-cycle stall.
+				</p>
+				<table class="code" cellpadding="2" cellspacing="0">
+					<tr>
+						<th class="brd">Cycle</th>
+						<th class="brd">IF</th>
+						<th class="brd">ID</th>
+						<th class="brd">EX</th>
+						<th class="brd">MA</th>
+						<th class="bd">WB</th>
+					</tr>
+					<tr>
+						<th class="br">1</th>
+						<td class="br">lb</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">2</th>
+						<td class="br">add</td>
+						<td class="br">lb</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">3</th>
+						<td class="br">&nbsp;</td>
+						<td class="br">add</td>
+						<td class="br">lb</td>
+						<td class="br">&nbsp;</td>
+						<td></td>
+						<td class="comment">We detect a stall, issue a <code>nop</code>
+					instead of the <code>add</code> </td>
+					</tr>
+					<tr>
+						<th class="br">4</th>
+						<td class="br">&nbsp;</td>
+						<td class="br">add</td>
+						<td class="br"><b>nop</b></td>
+						<td class="br">lb</td>
+						<td></td>
+					</tr>
+					<tr>
+						<th class="br">5</th>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">add</td>
+						<td class="br"><b>nop</b></td>
+						<td>lb</td>
+					</tr>
+				</table>
+				<p>We cannot do better than this, simply because the value is not loaded from
+			memory until the MA phase. Note that the load calculates the effective address of
+			the memory operand in the ALU phase; in the above example, it would
+			calculate 2+<code>r2</code>.
+			</p>
+				<p><b>Try it out</b>. Consider each solution (<a target="_blank"
+			href="showanim.php?name=Tutorial12">ignoring</a> the problem,
+				<a target="_blank"
+			href="showanim.php?name=Tutorial13">interlock</a> and
+				<a target="_blank"
+			href="showanim.php?name=tutorial14">interlock with forwarding</a>) in the MIPS
+			pipeline.
+			</p>
+			</blockquote>
+			<h1>Stores</h1>
+			<blockquote>
+			<img src="images/smdr_f.jpg" class="right">
+				<p>The store instruction exhibits the same data hazards as, for example,
+			arithmetic instructions such as <code>add</code> or <code>sub</code>.
+			Consider the following program:
+			</p>
+				<p class="code">add <b>r1</b>, r2, r3 <br>s&nbsp;&nbsp; 10(r0),
+				<b>r1</b> <span class="comment">memory[10] :=<code>r1</code></span>
+				</p>
+				<p>To solve the hazard, we have the usual three options:
+			</p>
+				<ol>
+					<li>Copy the result from B (effectively, from the register file) to SMR and ignore any dependencies.
+					In effect, leave the hardware as it was. </li>
+					<li>Stall the pipeline. This results in a two-cycle penalty
+					</li>
+					<li>Use forwarding. This requires an additional multiplexer (MUX8) and
+					connections from OUT0 and OUT1 (connections marked 3 and 4)
+					</li>
+				</ol>
+				<p>Note that, conceptually, this is not a new problem (it is the exact same
+				<a href="#datahazards">data
+			hazard</a> as we saw before). It is treated separately here, however, because we do need a bit of extra hardware
+			to resolve the hardware for stores.
+			</p>
+			</blockquote>
+			<h1>Control Hazards</h1>
+			<blockquote>
+				<p>Consider the following code sequence:
+			</p>
+				<p class="code">&nbsp;&nbsp;&nbsp; add r1, r2, r3 <br>&nbsp;&nbsp;&nbsp; j&nbsp;&nbsp; l1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				<span class="comment">// Jump to (label) <code>l1</code></span><br>&nbsp;&nbsp;&nbsp; sub r2, r3, r0
+				<br><br>l1: xor r3, r0, r1 <br>&nbsp&nbsp;&nbsp; ori r1, r2, 10
+				<br></p>
+				<p>How this is executed in the MIPS pipeline?
+			</p>
+				<table class="code" cellpadding="2" cellspacing="0">
+					<tr>
+						<th class="brd">Cycle</th>
+						<th class="brd">IF</th>
+						<th class="brd">ID</th>
+						<th class="brd">EX</th>
+						<th class="brd">MA</th>
+						<th class="bd">WB</th>
+					</tr>
+					<tr>
+						<th class="br">1</th>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">2</th>
+						<td class="br">j</td>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">3</th>
+						<td class="br"><b>sub</b></td>
+						<td class="br">j</td>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td>&nbsp;</td>
+						<td class="comment">The branch is resolved here, but we already fetched the
+						<code>sub</code></td>
+					</tr>
+					<tr>
+						<th class="br">4</th>
+						<td class="br">xor</td>
+						<td class="br"><b>sub</b></td>
+						<td class="br">j</td>
+						<td class="br">add</td>
+					</tr>
+					<tr>
+						<th class="br">5</th>
+						<td class="br">ori</td>
+						<td class="br">xor</td>
+						<td class="br"><b>sub</b></td>
+						<td class="br">j</td>
+						<td>add</td>
+					</tr>
+				</table>
+				<p>Notice that we executed the <code>sub</code> instruction which, logically, should
+			never have executed because of the branch (<code>j</code>). This
+			happens because the branch target is only calculated in the ID phase.
+			This problem is called a <b>control hazard</b>.
+			</p>
+				<p>As with load hazards, we can decide to ignore the control hazard.
+				Once we define that the instruction directly after the branch is
+				executed anyway, we can take that into account and make use of it.
+				This technique is called <b>delayed branches</b>, and the
+				instruction following the branch is said to be in the <b>delay
+				slot</b>.
+			</p>
+				<p><b>Try it out</b>. Run this program using
+				<a target="_blank" href="showanim.php?name=Tutorial15">delayed branches</a>.
+				</p>
+				<p>Alternatively, we can stall the pipeline. Remember, when we stall the pipeline, the instruction in the ID
+				phase (which would be the branch) is not issued (a <code>nop</code> is issued instead). We also said that
+				the IF and ID phase simply re-execute, i.e., their registers are not updated.
+				</p>
+				<p>As it turns out, this is not completely true. If the PC would not be updated, the IF phase would fetch the
+				same instruction again (the <code>sub</code>), and we would be in the exact same situation. Thus, the PC
+				<i>is</i> updated for a control hazard. The ID register and PC1 are
+				<i>not</i> updated, however, because if they
+				did, the <code>sub</code> instruction would make it to the ID phase, which is exactly what we want to
+				avoid).
+			</p>
+				<p>Here is how the program would executed using pipeline interlock.
+				</p>
+				<table class="code" cellpadding="2" cellspacing="0">
+					<tr>
+						<th class="brd">Cycle</th>
+						<th class="brd">IF</th>
+						<th class="brd">ID</th>
+						<th class="brd">EX</th>
+						<th class="brd">MA</th>
+						<th class="bd">WB</th>
+					</tr>
+					<tr>
+						<th class="br">1</th>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">2</th>
+						<td class="br">j</td>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">3</th>
+						<td class="br">sub</td>
+						<td class="br">j</td>
+						<td class="br">add</th>
+						<td class="br">&nbsp;</td>
+						<td>&nbsp;</td>
+						<td class="comment">We detect a stall</td>
+					</tr>
+					<tr>
+						<th class="br">4</th>
+						<td class="br">xor</td>
+						<td class="br">j</td>
+						<td class="br">nop</td>
+						<td class="br">add</td>
+						<td>&nbsp;</td>
+						<td class="comment">PC is updated so when the IF re-executes, a
+					different instruction is loaded</td>
+					</tr>
+					<tr>
+						<th class="br">5</th>
+						<td class="br">ori</td>
+						<td class="br">xor</td>
+						<td class="br">j</td>
+						<td class="br">nop</td>
+						<td>add</td>
+					</tr>
+				</table>
+				<p><b>Try it out</b>. Run this program using
+				<a target="_blank" href="showanim.php?name=Tutorial16">branch interlock</a>.
+				</p>
+			</blockquote>
+
+			<img src="images/bp.jpg" class="right">
+			<h1><span style="text-decoration: none">Branch Prediction</span></h1>
+
+			<blockquote>
+				<p>Finally, there is a third option, <b>branch prediction</b>. Branch
+			prediction uses a <b>Branch Target Buffer</b> to <b>predict</b> what
+			the target of the PC will be. This branch target buffer or <b>BTB</b>
+			is an associative cache. Each entry in this cache lists an address of a
+			branch instruction (the <b>tag</b>), together with the prediction
+			target. This predicted target is based on the last time the branch was
+			executed.
+			</p>
+				<p>When the IF phase executes, it sends the contents of the PC to the
+			BTB (1). The BTB then compares this with the addresses (tags) in its cache.
+			If the address is in the cache, we must have executed the branch before. We
+			then predict that the branch will do the same as the last time, so we send the
+			associated value in the BTB to the PC (2). </p>
+				<p>If the address is not there, either because we never saw the branch before
+			(<b>compulsory miss</b>), or
+			because we <i>did</i> see the the branch before, but too long ago and it has been
+			replaced by another branch in the BTB (<b>capacity miss</b> or <b>conflict
+			miss</b>), we cannot predict the branch and we simply
+			calculate <code>PC+4</code> (as if we did not have branch prediction, this is
+			also called <b>predict-not-taken</b>, because we "predict" that we do not take
+			the branch and simply want to execute the next instruction in memory).
+				</p>
+				<p>Of course, the prediction could be wrong. We cannot determine this until
+			the ID phase, however. Remember, in the IF phase, we do not know what kind of instruction
+			we are executing - this is only determined in the ID phase. Therefore, in the ID
+			phase, we calculate the branch target anyway.  We then compare the calculated
+			branch target with the predicted PC (by comparing it to the <code>PC</code>
+			register). If the prediction is correct, all is well, but if it is wrong (or if
+			we did not predict the target address because of a BTB miss), we need
+			to stall the pipeline and update the BTB (connections 3, 4 and 5).
+				</p>
+				<p>So there are 3 different situations:
+			</p>
+				<ol>
+					<li><b>The branch is not in the BTB</b><br>We update the PC with PC+4. When
+				the branch gets to the ID phase, we stall the pipeline to update the
+				BTB.</li>
+					<li><b>The branch is in the BTB, but the prediction is wrong</b><br>We update the PC with the predicted
+				PC. When the branch gets to the ID phase, we stall the pipeline to
+				update the BTB.</li>
+					<li><b>The branch is in the BTB and the prediction is
+				correct</b><br>We
+				update the PC with the predicted PC. When the branch gets to the ID
+				phase, no action is taken.</li>
+				</ol>
+				<p><b>Try it out</b>. See a
+				<a target="_blank" href="showanim.php?name=Tutorial17">demonstration</a> of branch prediction. Notice that all three situations listed above occur when the program is executed.
+				</p>
+			</blockquote>
+			<p><h1>Conditional Branches</h1></p>
+			<blockquote>
+				The MIPS processor supports two conditional branches:
+				<code>beqz</code>
+			(branch if equal to zero) and <code>bnez</code> (branch if not equal to
+			zero). Both these instructions take an arbitrary register as a source
+			operand. This yields another data hazard:
+
+				<p class="code">&nbsp;&nbsp;&nbsp; add&nbsp; r1, r2, r3 <br>&nbsp;&nbsp;&nbsp; bneq l1, r1
+				<br>&nbsp;&nbsp;&nbsp; sub&nbsp; r2, r3, r1 <br><br>l1: xor r3, r2, r1
+				<br>&nbsp;&nbsp;&nbsp; ori r3, r1, 10  <br></p>
+				<p>Consider the execution of this program in the pipeline:
+			</p>
+				<table class="code" cellpadding="2" cellspacing="0">
+					<tr>
+						<th class="brd">Cycle</th>
+						<th class="brd">IF</th>
+						<th class="brd">ID</th>
+						<th class="brd">EX</th>
+						<th class="brd">MA</th>
+						<th class="bd">WB</th>
+					</tr>
+					<tr>
+						<th class="br">1</th>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+					</tr>
+					<tr>
+						<th class="br">2</th>
+						<td class="br">bneq</td>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td class="br">&nbsp;</td>
+						<td>&nbsp;</td>
+						<td class="comment">We could use a BTB here, or
+					predict-not-taken</td>
+					</tr>
+					<tr>
+						<th class="br">3</th>
+						<td class="br">sub</td>
+						<td class="br">bneq</td>
+						<td class="br">add</td>
+						<td class="br">&nbsp;</td>
+						<td>&nbsp;</td>
+						<td class="comment">Now we need to check if our prediction was
+					correct</td>
+					</tr>
+				</table><img src="images/zf.jpg" class="right">
+				<p>The problems start in cycle 3. We need to check register
+				<code>r1</code> to see if it is not equal to zero. But the
+			<code>add</code> instruction is still in the EX phase: the value for
+				<code>r1</code> is still being calculated! As for the other hazards
+			that we have seen, we can ignore this problem, and call it a feature.
+				</p>
+				<p>We call also stall the pipeline, but we would have to stall it for
+			two cycles (we would have to wait until the <code>add</code>
+			gets to the WB phase). Even then, we would only have the result towards
+			the end of the cycle (the register file is updated halfway through the
+			cycle, and we still have to do the comparison against zero), but that
+			is acceptable. That is quite a long stall, however, and this situation
+			is very common (regard the <code>add</code> as a compare instruction
+			and you'll understand why).
+			</p>
+				<p>Finally, we could try to forward the result, as we did for
+				<a href="#datahazards">data hazards</a>. That means, we would have to
+			forward the contents of OUT0 (connection c) and OUT1 (d) to the
+			comparator. But that is not enough! We also need to forward the result
+			of the ALU <i>as it is being calculated</i> to the comparator (b).
+			Remember, this result will only be written to OUT0 on the next clock
+			cycle - which is too late. This adds an asynchronous (pronounce: dodgy)
+			element to the element, but it is necessary to avoid a stall in this -
+			very common - situation.
+			</p>
+				<p><b>Try it out</b>. See all three possible solutions (<a target="_blank" href="showanim.php?name=Tutorial18">no zero
+			forwarding</a>,
+				<a target="_blank" href="showanim.php?name=Tutorial19">zero interlock</a> and
+				<a href="showanim.php?name=Tutorial20">zero forwarding</a>) in the animation.
+				</p>
+			</blockquote>
+			<h1>Summary of Pipeline Stalls</h1>
+			<blockquote>
+				<p>The following table lists all possible stalls exhaustively, with the conditions for the stall. For each
+			individual stall, you can run an animation that will show a program in which the stall occurs.  Note that only
+			for the control hazards, the PC register is updated during the stall. For all other stalls, the PC register is
+			not updated (see section on <a href="#controlhazards">control hazards</a> for more information).
+				</p>
+				<p>The sample programs for each of these hazards allow to change the
+			circuit configuration and the contents of the instruction memory, if
+			you wish. This allows you to try and remove the hazard by changing the
+			program or the circuit configuration.
+			</p>
+				<table cellspacing="0" cellpadding="3">
+					<tr>
+						<th class="brd" align="left">Hazard</th>
+						<th class="brgd" align="left">IF</th>
+						<th class="brgd" align="left">ID</th>
+						<th class="brgd" align="left">EX</th>
+						<th class="brgd" align="left">MA</th>
+						<th class="brd" align="left">WB</th>
+						<th class="brd" align="left">Condition</th>
+						<th class="bd" align="left">Demo</th>
+					</tr>
+					<tr>
+						<td class="br">RAW</td>
+						<td class="codebrg">i1</td>
+						<td class="codebrg">i2 .., <b>R<i>x</i></b>, ..</td>
+						<td class="codebrg">i3 <b>R<i>x</i></b>, .., ..</td>
+						<td class="codebrg">i4</td>
+						<td class="codebr">i5</td>
+						<td class="br">No ALU forwarding</th>
+						<td>
+						<a target="_blank" href="showanim.php?name=Tutorial21">Run</a></td>
+					</tr>
+					<tr>
+						<td class="brd">&nbsp;</td>
+						<td class="codebrdg">i1</td>
+						<td class="codebrdg">i2 .., <b>R<i>x</i></b>, ..</td>
+						<td class="codebrdg">i3</td>
+						<td class="codebrdg">i4 <b>R<i>x</i></b>, .., ..</td>
+						<td class="codebrd">i5</td>
+						<td class="brd">No ALU forwarding</th>
+						<td class="bd">
+						<a target="_blank" href="showanim.php?name=Tutorial22">Run</a></td>
+					</tr>
+					<tr>
+						<td class="br">RAW</td>
+						<td class="codebrg">i1</td>
+						<td class="codebrg">sb .., <b>R<i>x</i></b></td>
+						<td class="codebrg">i3 <b>R<i>x</i></b>, .., ..</td>
+						<td class="codebrg">i4</td>
+						<td class="codebr">i5</td>
+						<td class="br">No forwarding to SMR</td>
+						<td>
+						<a target="_blank" href="showanim.php?name=Tutorial23">Run</a></td>
+					</tr>
+					<tr>
+						<td class="brd">(store)</td>
+						<td class="codebrdg">i1</td>
+						<td class="codebrdg">sb .., <b>R<i>x</i></b></td>
+						<td class="codebrdg">i3</td>
+						<td class="codebrdg">i4 <b>R<i>x</i></b>, .., ..</td>
+						<td class="codebrd">i5</td>
+						<td class="brd">No forwarding to SMR</td>
+						<td class="bd">
+						<a target="_blank" href="showanim.php?name=Tutorial24">Run</a></td>
+					</tr>
+					<tr>
+						<td class="br">RAW</td>
+						<td class="codebrg">i1</td>
+						<td class="codebrg">beqz <b>R<i>x</i></b></td>
+						<td class="codebrg">i3 <b>R<i>x</i></b>, .., ..</td>
+						<td class="codebrg">i4</td>
+						<td class="codebr">i5</td>
+						<td class="br">No zero-forwarding</td>
+						<td>
+						<a target="_blank" href="showanim.php?name=Tutorial25">Run</a></td>
+					</tr>
+					<tr>
+						<td class="br">(branch)</td>
+						<td class="codebrg">i1</td>
+						<td class="codebrg">beqz <b>R<i>x</i></b></td>
+						<td class="codebrg">i3</td>
+						<td class="codebrg">i4 <b>R<i>x</i></b>, .., ..</td>
+						<td class="codebr">i5</td>
+						<td class="br">No zero-forwarding</td>
+						<td>
+						<a target="_blank" href="showanim.php?name=Tutorial26">Run</a></td>
+					</tr>
+					<tr>
+						<td class="br">&nbsp;</td>
+						<td class="codebrg">i1</td>
+						<td class="codebrg">jr <b>R<i>x</i></b></td>
+						<td class="codebrg">i3 <b>R<i>x</i></b>, .., ..</td>
+						<td class="codebrg">i4</td>
+						<td class="codebr">i5</td>
+						<td class="br">(Always)</td>
+						<td>
+						<a target="_blank" href="showanim.php?name=Tutorial27">Run</a></td>
+					</tr>
+					<tr>
+						<td class="brd">&nbsp;</td>
+						<td class="codebrdg">i1</td>
+						<td class="codebrdg">jr <b>R<i>x</i></b></td>
+						<td class="codebrdg">i3</td>
+						<td class="codebrdg">i4 <b>R<i>x</i></b>, .., ..</td>
+						<td class="codebrd">i5</td>
+						<td class="brd">(Always)</td>
+						<td class="bd">
+						<a target="_blank" href="showanim.php?name=Tutorial28">Run</a></td>
+					</tr>
+					<tr>
+						<td class="brd">Load</td>
+						<td class="codebrdg">i1</td>
+						<td class="codebrdg">i2 .., <b>R<i>x</i></b>, ..</td>
+						<td class="codebrdg">lb <b>R<i>x</i></b>, ..</td>
+						<td class="codebrdg">i4</td>
+						<td class="codebrd">i5</td>
+						<td class="brd">Load interlock</td>
+						<td class="bd">
+						<a target="_blank" href="showanim.php?name=Tutorial29">Run</a></td>
+					</tr>
+					<tr>
+						<td class="br">Control</td>
+						<td class="codebrg">i1</td>
+						<td class="codebrg">j L1</td>
+						<td class="codebrg">i3</td>
+						<td class="codebrg">i4</td>
+						<td class="codebr">i5</td>
+						<td class="br">Calculated PC &ne; <code>pc</code></td>
+						<td>
+						<a target="_blank" href="showanim.php?name=Tutorial30">Run</a></td>
+					</tr>
+					<tr>
+						<td class="br">&nbsp;</td>
+						<td class="codebrg">i1</td>
+						<td class="codebrg">jr R<i>x</i></td>
+						<td class="codebrg">i3</td>
+						<td class="codebrg">i4</td>
+						<td class="codebr">i5</td>
+						<td class="br">Calculated PC &ne; <code>pc</code></td>
+						<td>
+						<a target="_blank" href="showanim.php?name=Tutorial31">Run</a></td>
+					</tr>
+					<tr>
+						<td class="br">&nbsp;</td>
+						<td class="codebrg">i1</td>
+						<td class="codebrg">beqz R<i>x</i>, L1</td>
+						<td class="codebrg">i3</td>
+						<td class="codebrg">i4</td>
+						<td class="codebr">i5</td>
+						<td class="br">Calculated PC &ne; <code>pc</code></td>
+						<td>
+						<a target="_blank" href="showanim.php?name=Tutorial32">Run</a></td>
+					</tr>
+				</table>
+			</blockquote>
+
+			<h1><span style="text-decoration: none">Questions</span></h1>
+
+			<blockquote>
+				<p><b>Question 1</b>. Why is the MA phase idle for all instructions except loads and stores?
+				<br></p>
+				<p><b>Question 2</b>. In the section <a href="#pipelining">introduction of pipelining</a>, the same program is executed in the non-piplined and in the pipelined processor. Confirm that the speedup is 300%, and explain why this is less than the expected 500%.
+				</p>
+				<p><b>Question 3</b>. Draw a pipeline diagram to show the hazard mentioned in the section on
+				<a href="#stores">forwarding to the SMDR</a>. Then write a
+				<a target="_blank" href="index.htm">program</a> to show this hazard, and observe the effects of the different circuit configurations (<b>Store operand forwarding</b>,
+				<b>Store interlock</b>, and <b>No store interlock</b>).
+			</p>
+				<p><b>Question 4</b>. The table with <a href="#stalls">all pipeline stalls</a> lists two situations that always cause a stall. What extra hardware would you need to avoid these stalls?
+				</p>
+				<p><b>Question 5</b>. The diagram shows four control lines for multiplexer MUX3 (see the section on
+				<a href="#conditionalbranches">conditional branches</a>). Are all of these four lines strictly necessary?
+				</p>
+				<p><b>Question 6</b>. There are quite a number of stalls during the execution
+				<a target="_blank" href="showanim.php?name=Multiplier">shift-and-add multiplier</a>. Rewrite the program to avoid nearly all of these stalls.
+				</p>
+			</blockquote>
+			<h1><span style="text-decoration: none">Bibliography</span></h1>
+			<blockquote>
+				<table>
+					<tr>
+						<td><a name="bib1">[1]</a></td>
+						<td><i>Computer Architecture: A Quantitative Approach</i>, 3rd edition, John L. Hennessy &amp; David A.
+				Patterson, Morgan Kaufmann Publishers [now Elsevier]
+				</td>
+					</tr>
+					<tr>
+						<td><a name="bib2">[2]</a></td>
+						<td><i>Logic and Computer Design Fundamentals</i>, 2nd edition, M. Morris Mano and Charles R. Kime, Prentice
+				Hall </td>
+					</tr>
+				</table>
+			</blockquote>
+
+		</tr>
+		</table>
+
+  <script>
+    footer("dlx");
+  </script>
+
+</body>
+
+</html>

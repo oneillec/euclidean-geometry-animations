@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for HTML5 for Windows version 5.2.0">
+  <title>VivioJS MESI animation help</title>
+  <meta charset="utf-8">
+  <meta name="Author" content="jones@scss.tcd.ie">
+  <meta name="description" content="VivioJS MESI cache coherency animation help">
+  <meta name="keywords" content="VivioJS, animation, cache coherency, MESI">
+  <link rel="shortcut icon" href="../vivio.ico" type="image/x-icon">
+  <script src="../analytics.js">
+  </script>
+  <script src="../funcs.js">
+  </script>
+  <script src="../vivio.js">
+  </script>
+  <script src="MESI.js">
+  </script>
+</head>
+<body style="background-color:#e0e0e0;">
+  <script>
+        header("MESI Cache Coherency Protocol");
+  </script>
+  <table style="margin-left:2%; width:96%;" border="0" cellspacing="0" cellpadding="5">
+    <tr>
+      <td>
+        <p style="text-align:justify;"><br>
+        This VivioJS animation is designed to help you understand the MESI cache coherency protocol.</p>
+        <p style="text-align:justify;">A multiprocessor system is depicted comprising 3 CPUs with local caches and main memory. For simplicity, main memory
+        comprises 4 locations a0, a1, a2 and a3. The caches are direct mapped and contain two sets. The even addresses (a0 and a2) map to set 0 whilst the odd
+        addresses (a1 and a3) map to set 1.</p>
+        <p style="text-align:justify;">NB: in order to simplify this animation, the size of a cache line and that of a CPU read/write operation are identical.
+        On a write miss, however, the CPU reads memory even though it will completely overwrite the cache line. This simulates the behaviour of real caches
+        where the size of the cache line is usually larger than that of a CPU read/write operation.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align:center; color:red;">
+        <div style="position:relative;">
+          <!-- tabindex needed for keyboard input -->
+          <canvas id="canvas" style="width:95%; height:620px; overflow:hidden; display:block;">
+            No canvas support
+          </canvas>
+        </div>
+        Click on diagram to activate animation or <a href="MESI.htm">here</a> for a full screen version.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <p style="text-align:justify;">Each CPU contains buttons which initiate read or write transactions on the specified memory location. A "CPU write"
+        writes an incrementing value (initially 1) to "memory".</p>
+        <p style="text-align:justify;">The idea is to press the buttons and see if you can follow the actions and state transitions which occur. It is possible
+        to introduce bugs into the animation by pressing the "bug free" button in the top right hand corner. See if you can determine what the bugs are!</p>
+        <p style="text-align:justify;">The direction of the traffic on the address and data busses are indicated by blue and red arrows respectively. The cache
+        lines and memory location involved in the transaction are coloured green. Stale memory locations are coloured gray.</p>
+        <p style="text-align:justify;">A cache line can be in one of 4 states. <b>INVALID:</b> cache line NOT present in cache. <b>EXCLUSIVE:</b> cache line
+        present in this cache ONLY and identical to copy in memory. <b>MODIFIED:</b> cache line present in this cache ONLY and memory copy out of date (stale).
+        <b>SHARED:</b> cache line in this cache and possibly other caches, ALL copies identical to memory copy. Writes to <b>SHARED</b> cache lines are write
+        through whereas writes to <b>EXCLUSIVE</b> cache lines are write-back. If a cache observes a bus transaction for an address which it contains, it
+        asserts the SHARED bus line. MESI is an invalidate cache coherency protocol.</p>
+        <p style="text-align:justify;">Here is the state transition diagram for a cache line:</p>
+        <p><img style="margin:0px auto; display:block" border="0" src="MESI.png" alt="MESI state transition digram"></p>
+        <div style="color:red; font-size:larger;">
+          <u>Sample sequence to try [from RESET]</u><br>
+        </div><br>
+        <div>
+          <table style="margin-left:2%; width:96%; border-collapse:collapse;" border="1" cellpadding="4">
+            <tr>
+              <td style="width:5%; text-align:center;">1</td>
+              <td width="20%">CPU0: read a0</td>
+              <td><i>CPU0 reads a0 from memory <span style="color:red;">[not shared]</span> - state E</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">2</td>
+              <td width="20%">CPU0: read a0</td>
+              <td><i>CPU0 reads a0 from cache - state E</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">3</td>
+              <td width="20%">CPU0: write a0</td>
+              <td><i>CPU0 updates a0 in cache ONLY - state M</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">4</td>
+              <td width="20%">CPU0: write a0</td>
+              <td><i>CPU0 updates a0 in cache ONLY - state M</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">5</td>
+              <td width="20%">CPU1: read a0</td>
+              <td><i>CPU1 reads a0, CPU0 cache intervenes and supplies data to cache and memory - state S</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">6</td>
+              <td width="20%">CPU1: write a0</td>
+              <td><i>CPU1 updates a0 in cache and memory and invalidates all other caches with address a0 - state E</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">7</td>
+              <td width="20%">CPU1: write a0</td>
+              <td><i>CPU1 updates a0 in cache ONLY - state M</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">8</td>
+              <td width="20%">CPU0: write a0</td>
+              <td><i>CPU0 reads a0, CPU1 cache intervenes and supplies data to cache and memory (S), CPU0 then writes to a0 in cache and memory invalidating
+              all other caches with address a0 - state</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">9</td>
+              <td width="20%">CPU0: write a2</td>
+              <td><i>CPU0 reads a2 from memory (E) and then writes to a2 - state M</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">10</td>
+              <td width="20%">CPU0: write a0</td>
+              <td><i>CPU0 flushes a2 to memory, reads a2 from memory (E) and then writes to a0 - state M</i></td>
+            </tr>
+          </table>
+        </div>
+      </td>
+    </tr>
+  </table><br>
+  <script>
+        vplayer = new VPlayer("canvas", MESI);
+        footer("caches");
+  </script>
+</body>
+</html>

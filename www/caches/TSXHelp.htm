@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for HTML5 for Windows version 5.2.0">
+  <title>VivioJS Intel TSX MESI animation</title>
+  <meta charset="utf-8">
+  <meta name="Author" content="jones@scss.tcd.ie">
+  <meta name="description" content="VivioJS TSX MESI cache coherency animation help">
+  <meta name="keywords" content="VivioJS, animation, TSX, MESI, cache coherency">
+  <link rel="icon" type="image/png" href="../vivio.png?v=2"/>
+  <script src="../analytics.js">
+  </script>
+  <script src="../funcs.js">
+  </script>
+  <script src="vivio.js">
+  </script>
+  <script src="TSX.js">
+  </script>
+</head>
+<body style="background-color:#e0e0e0;">
+  <script>
+        header("Intel® TSX MESI Cache");
+  </script>
+  <table style="margin-left:2%; width:96%;" border="0" cellspacing="0" cellpadding="5">
+    <tr>
+      <td>
+        <p style="text-align:justify;"><br>
+        This VivioJS animation is designed to help you understand the operation of the Intel® TSX MESI cache.
+        As a detailed description of the operation of the Intel® TSX MESI cache is not readily available, this animation is
+        a pragmatic attempt at simulating its operation (apologies in advance to Intel®).
+        An understanding of the <a href="MESIHelp.htm">MESI</a> cache coherency protocol is assumed.
+        </p>
+        <p style="text-align:justify;">
+        A multiprocessor system is depicted comprising 3 CPUs with local caches and main memory. For simplicity, main memory
+        comprises 4 locations a0, a1, a2 and a3. The caches are direct mapped and contain two sets. The even addresses map to set 0 and the odd
+        addresses to set 1.
+        Each CPU contains buttons which initiate read, inc and dec transactions on the specified memory location.
+        The CPUs also have three buttons xbegin, xend and xabort which simululate the execution of the equivalent TSX instructions.
+        xbegin starts a transaction, xend ends the transaction and xabort aborts the transaction.
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align:center; color:red;">
+        <div style="position:relative;">
+          <!-- tabindex needed for keyboard input -->
+          <canvas id="canvas" style="width:95%; height:620px; overflow:hidden; display:block;">
+            No canvas support
+          </canvas>
+        </div>
+        Click on diagram to activate animation or <a href="TSX.htm">here</a> for a full screen version.
+      </td>
+    </tr>
+    <tr>
+      <td>
+
+        <p style="text-align:justify;">
+        Each cache line has a MESI state and a T bit which is set if the location is in the transaction read or write set.
+        The 4 MESI states are <b>INVALID:</b> cache line NOT present in cache, <b>EXCLUSIVE:</b> cache line
+        present in this cache ONLY and its value is identical to the equivalent memory location, <b>MODIFIED:</b> cache line present in this cache ONLY (memory copy out of date) and
+        <b>SHARED:</b> cache line in this cache and possibly other caches, ALL copies identical to the equivalent memory location.
+
+		<P>
+        The operation of the Intel® TSX MESI cache is best described by considering a number of possible transactions.
+		</p>
+
+        <div>
+
+		  <div style="color:red; text-decoration: underline;">
+			CPU0 increments a0 using a transaction (from RESET)
+		  </div>
+
+		  <br>
+
+          <table style="margin-left:2%; width:96%; border-collapse:collapse;" border="1" cellpadding="4">
+            <tr>
+              <td style="width:5%; text-align:center;">1</td>
+              <td width="20%">CPU0: xbegin</td>
+              <td><i>CPU0 starts transaction</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">2</td>
+              <td width="20%">CPU0: read a0</td>
+              <td><i>CPU0 reads a0 from memory - state EXCLUSIVE:T</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">3</td>
+              <td width="20%">CPU0: inc a0</td>
+              <td><i>CPU0 adds one to a0 in cache ONLY - state MODIFIED:T; memory a0 NOT gray as value in cache tentative until transaction commits</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">4</td>
+              <td width="20%">CPU0: xend</td>
+              <td><i>CPU0 commits transaction - a0 state MODIFIED; memory a0 gray as contents stale</i></td>
+            </tr>
+          </table>
+
+		  <br>
+		  <div style="color:red; text-decoration: underline;">
+			CPU0 tries to increment a0 using a transaction - transaction aborted using xabort (from RESET)
+		  </div>
+		  <br>
+
+          <table style="margin-left:2%; width:96%; border-collapse:collapse;" border="1" cellpadding="4">
+            <tr>
+              <td style="width:5%; text-align:center;">1</td>
+              <td width="20%">CPU0: xbegin</td>
+              <td><i>CPU0 starts transaction</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">2</td>
+              <td width="20%">CPU0: read a0</td>
+              <td><i>CPU0 reads a0 from memory - state EXCLUSIVE:T</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">3</td>
+              <td width="20%">CPU0: inc a0</td>
+              <td><i>CPU0 adds one to a0 in cache ONLY - state MODIFIED:T; memory a0 NOT gray as value in cache tentative until transaction commits</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">4</td>
+              <td width="20%">CPU0: xabort</td>
+              <td><i>CPU0 aborts transaction and invalidates a0 - a0 state INVALID</i></td>
+            </tr>
+          </table>
+
+		  <br>
+		  <div style="color:red; text-decoration: underline;">
+			CPU0 tries to increment a0 and decrement a2 using a transaction - transaction aborted due hardware limits (from RESET)
+		  </div>
+		  <br>
+
+          <table style="margin-left:2%; width:96%; border-collapse:collapse;" border="1" cellpadding="4">
+            <tr>
+              <td style="width:5%; text-align:center;">1</td>
+              <td width="20%">CPU0: xbegin</td>
+              <td><i>CPU0 starts transaction</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">2</td>
+              <td width="20%">CPU0: read a0</td>
+              <td><i>CPU0 reads a0 from memory - state EXCLUSIVE:T</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">3</td>
+              <td width="20%">CPU0: inc a0</td>
+              <td><i>CPU0 adds one to a0 in cache ONLY - state MODIFIED:T; memory a0 NOT gray as value in cache tentative until transaction commits</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">4</td>
+              <td width="20%">CPU0: read a2</td>
+              <td><i>CPU0 aborts transaction as MODIFIED a0 needs to be evicted from cache to make room for a2</i></td>
+            </tr>
+          </table>
+
+		  <br>
+		  <div style="color:red; text-decoration: underline;">
+			CPU0 increments a0 using a transaction - a0 initially in cache in MODIFIED state (from RESET)
+		  </div>
+		  <br>
+
+          <table style="margin-left:2%; width:96%; border-collapse:collapse;" border="1" cellpadding="4">
+           <tr>
+              <td style="width:5%; text-align:center;">1</td>
+              <td width="20%">CPU0: inc a0</td>
+              <td><i>CPU0 reads a0 from memory and adds one to a0 in cache ONLY - state MODIFIED; memory a0 gray as contents stale</i></td>
+            </tr>
+           <tr>
+              <td style="width:5%; text-align:center;">2</td>
+              <td width="20%">CPU0: xbegin</td>
+              <td><i>CPU0 starts transaction</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">3</td>
+              <td width="20%">CPU0: read a0</td>
+              <td><i>CPU0 flushes a0 to memory and then sets state to EXCLUSIVE:T</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">4</td>
+              <td width="20%">CPU0: inc a0</td>
+              <td><i>CPU0 adds one to a0 in cache ONLY - state MODIFIED:T; memory a0 NOT gray as value in cache tentative until transaction commits</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">5</td>
+              <td width="20%">CPU0: xend</td>
+              <td><i>CPU0 commits transaction - a0 state MODIFIED; memory a0 gray as contents stale</i></td>
+            </tr>
+          </table>
+
+		  <br>
+		  <div style="color:red; text-decoration: underline;">
+			CPU0 and CPU1 both try to increment a0 using a transaction - conflict detected, CPU0 transaction aborts and CPU1 transaction commits (from RESET)
+		  </div>
+		  <br>
+
+          <table style="margin-left:2%; width:96%; border-collapse:collapse;" border="1" cellpadding="4">
+            <tr>
+              <td style="width:5%; text-align:center;">1</td>
+              <td width="20%">CPU0: xbegin</td>
+              <td><i>CPU0 starts a transaction</i></td>
+            </tr>
+            <td style="width:5%; text-align:center;">2</td>
+              <td width="20%">CPU1: xbegin</td>
+              <td><i>CPU1 starts a transaction</i></td>
+            </tr>
+          	<tr>
+              <td style="width:5%; text-align:center;">3</td>
+              <td width="20%">CPU0: inc a0</td>
+              <td><i>CPU0 reads a0 from cache and adds one to a0 in cache ONLY - state MODIFIED:T; memory a0 NOT gray as value in cache tentative until transaction commits</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">4</td>
+              <td width="20%">CPU1: read a0</td>
+              <td><i>
+              CPU1 reads a0, normally CPU0 would intervene and supply its MODIFIED cache line to CPU1, but as a0 is in CPU0's transaction writeset,
+              it invalidates its copy of a0 and aborts its transaction; CPU 1 reads a0 from memory and sets state EXCLUSIVE:T;
+              </i></td>
+            </tr>
+           <tr>
+              <td style="width:5%; text-align:center;">5</td>
+              <td width="20%">CPU1: inc a0</td>
+              <td><i>CPU1 adds one to a0 in cache ONLY - state MODIFIED:T; memory a0 NOT gray as value in cache tentative until transaction commits</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">6</td>
+              <td width="20%">CPU1: xend</td>
+              <td><i>CPU1 commits transaction - a0 state MODIFIED; memory a0 gray as contents stale</i></td>
+            </tr>
+          </table>
+
+        </div>
+      </td>
+    </tr>
+  </table><br>
+  <script>
+        vplayer = new VPlayer("canvas", TSX);
+        footer("caches");
+  </script>
+</body>
+</html>

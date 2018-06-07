@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for HTML5 for Windows version 5.2.0">
+  <meta charset="utf-8">
+  <title>VivioJS DLX MIPS pipeline animation</title>
+  <meta name="description" content="Vivio DLX MIPS pipeline animation">
+  <meta name="keywords" content=
+  "Vivio, animation, DLX, MIPS, pipeline, pipelining, control hazards, data hazards, delayed branch, branch prediction, pipeline forwarding">
+  <script src="../analytics.js">
+  </script>
+  <script src="../funcs.js">
+  </script>
+  <script src="../vivio.js">
+  </script>
+  <script src="dlx.js">
+  </script>
+</head>
+<body style="margin:0; padding:0;">
+  <!-- tabindex needed for keyboard input -->
+  <canvas id="canvas" tabindex="1" style="width:100%; height:100%; position:absolute; overflow:hidden; display:block;">
+    No canvas support
+  </canvas>
+  <script>
+		args="name='multiplication' example=1 r0=0x00 r1=0x00 r2=0x05 r3=0x08 m0=0x00 m1=0x00 m2=0x00 m3=0x00 peMode=0 bpMode=0 liMode=0 afMode=0 sfMode=0 zfMode=0 locked=0 help=1";
+        vplayer = new VPlayer("canvas", dlx, args);
+		ajaxCounter("vivio", "dlx");
+  </script>
+</body>
+</html>

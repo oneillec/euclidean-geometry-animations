@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html style="height:100%;">
+<head>
+  <meta name="generator" content="HTML Tidy for HTML5 for Windows version 5.2.0">
+  <title>VivioJS cache coherency protocol animations</title>
+  <meta charset="utf-8">
+  <meta name="description" content="VivioJS cache coherency protocol animations">
+  <meta name="keywords" content="Vivio, VivioJS, animation, cache coherency, protocol, firefly, MESI, write-once, write-through">
+  <link rel="shortcut icon" href="../vivio.ico" type="image/x-icon">
+  <script src="../analytics.js">
+  </script>
+  <script src="../funcs.js">
+  </script>
+  <script src="../vivio.js">
+  </script>
+  <script src="writeThrough.js">
+  </script>
+  <script src="writeOnce.js">
+  </script>
+  <script src="firefly.js">
+  </script>
+  <script src="MESI.js">
+  </script>
+</head>
+<body style="height:100%; background-color:#e0e0e0;">
+  <table style="margin-left:2%; width:96%; height:100%;" border="0" cellspacing="0" cellpadding="5">
+    <tr style="height:90%;">
+      <td>
+        <div style="position:relative; height:100%;">
+          <!-- tabindex needed for keyboard input -->
+          <canvas id="canvas" style="width:100%; height:100%; position:absolute; overflow:hidden; display:block;">
+            No canvas support
+          </canvas>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <hr style="color:#c0c0c0;" width="98%" size="1">
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align:center;"><input type="button" value="Write Through" onclick='vplayer.load(writeThrough)' style="width:150"> <input type="button"
+      value="Write Once" onclick='vplayer.load(writeOnce)' style="width:150"> <input type="button" value="Firefly" onclick='vplayer.load(firefly)' style=
+      "width:150"> <input type="button" value="MESI" onclick='vplayer.load(MESI)' style="width:150"><br>
+      <br></td>
+    </tr>
+  </table>
+  <script language="javascript">
+                vplayer = new VPlayer("canvas", MESI);
+                ajaxCounter("vivio", "caches");
+  </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for HTML5 for Windows version 5.2.0">
+  <meta charset="utf-8">
+  <title>VivioJS DLX MIPS animation</title>
+  <meta name="description" content="Vivio DLX MIPS pipeline animation">
+  <meta name="keywords" content=
+  "Vivio, animation, DLX, MIPS, pipeline, pipelining, control hazards, data hazards, delayed branch, branch prediction, pipeline forwarding">
+  <script src="../analytics.js">
+  </script>
+  <script src="../funcs.js">
+  </script>
+  <script src="../vivio.js">
+  </script>
+  <script src="dlx.js">
+  </script>
+</head>
+<body style="margin:0; padding:0;">
+  <!-- tabindex needed for keyboard input -->
+  <canvas id="canvas" tabindex="1" style="width:100%; height:100%; position:absolute; overflow:hidden; display:block;">
+    No canvas support
+  </canvas>
+  <script>
+        args = "help=0";
+        vplayer = new VPlayer("canvas", dlx, args);
+        ajaxCounter("vivio", "dlx");
+  </script>
+</body>
+</html>

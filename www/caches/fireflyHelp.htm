@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for HTML5 for Windows version 5.2.0">
+  <meta charset="utf-8">
+  <title>VivioJS firefly animation help</title>
+  <meta name="Author" content="jones@scss.tcd.ie">
+  <meta name="description" content="VivioJS firefly cache coherency protocol animation help">
+  <meta name="keywords" content="VivioJS, animation, cache coherency, protocol, firefly">
+  <link rel="shortcut icon" href="../vivio.ico" type="image/x-icon">
+  <script src="../analytics.js">
+  </script>
+  <script src="../funcs.js">
+  </script>
+  <script src="../vivio.js">
+  </script>
+  <script src="firefly.js">
+  </script>
+</head>
+<body style="background-color:#e0e0e0;">
+  <script>
+        header("Firefly Cache Coherency Protocol");
+  </script>
+  <table style="margin-left:2%; width:96%;" border="0" cellspacing="0" cellpadding="5">
+    <tr>
+      <td>
+        <p style="text-align:justify;"><br>
+        This VivioJS animation is designed to help you understand the firefly cache coherency protocol. The protocol is described in "<i>Firefly: A
+        Multiprocessor Workstation</i>" by Charles P. Thacker, Lawrence C. Stewart and Edwin H. Satterthwaite JR., IEEE Transactions on Computers Vol. 37, No.
+        8, August 1988.</p>
+        <p style="text-align:justify;">A multiprocessor system is depicted comprising main memory, 3 CPUs and their associated caches. For simplicity, main
+        memory contains 4 locations a0, a1, a2 and a3. The caches are direct mapped and contain two sets - addresses a0 and a2 map to set 0 and addresses a1
+        and a3 map to set 1.</p>
+        <p style="text-align:justify;">NB: in order to simplify this animation, the size of a cache line and that of a CPU read/write operation are identical.
+        On a write miss, however, the CPU reads memory even though it will completely overwrite it as this behaviour mirrors that of real caches where the size
+        of the cache line will usually be larger than that of a CPU read/write operation.<br></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align:center; color:red;">
+        <div style="position:relative;">
+          <!-- tabindex needed for keyboard input -->
+          <canvas id="canvas" style="width:95%; height:620px; overflow:hidden; display:block;">
+            No canvas support
+          </canvas>
+        </div>
+        Click on diagram to activate animation or <a href="firefly.htm">here</a> for a full screen version.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <br>
+        <p style="text-align:justify;">Each CPU contains buttons which initiate read or write transactions on the specified memory location. A "CPU write"
+        writes an incrementing value (initially 1) to "memory".</p>
+        <p style="text-align:justify;">The idea is to press the buttons and see if you can follow the actions and state transitions which occur. It is possible
+        to introduce bugs into the animation by pressing the "bug free" button in the bottom right hand corner. See if you can find out just exactly what the
+        bugs are!</p>
+        <p style="text-align:justify;">The direction of the traffic on the address and data busses are indicated by blue and red arrows respectively. The cache
+        lines and memory location involved in the transaction are coloured green. Stale memory locations are coloured gray.</p>
+        <p style="text-align:justify;">A cache line can be in one of 4 states. <b>~Shared and ~Dirty:</b> cache line present in this cache ONLY and cache line
+        identical to copy in memory. <b>~Shared and Dirty:</b> cache line present in this cache ONLY, but copy in memory out of date (stale). <b>Shared and
+        ~Dirty:</b> cache line in this cache and possibly other caches as well, all copies identical to copy in memory. <b>Shared and Dirty:</b> cache line in
+        this cache and possibly other caches as well, but memory copy out of date (stale). Writes to <b>Shared</b> cache lines are write through whereas writes
+        to <b>~Shared</b> cache lines are write-back. If a cache observes a bus transaction which refers to a cache line which it, itself, contains, then it
+        asserts the SHARED bus line. Firefly is an update cache coherency protocol.</p>
+        <p style="text-align:justify;">Here is the state transition diagram for a cache line:</p>
+        <p><img style="margin:0px auto; display:block" border="0" src="firefly.png" alt="firefly state transition diagram"></p>
+        <p style="text-align:justify;">The animation can be reset by pressing the reset button in the top right hand corner.</p>
+        <p style="color:red; font-size:larger;"><u>Sample sequences to try</u></p>
+        <p>Sequence 1 [from Reset]</p>
+        <div>
+          <table style="margin-left:2%; width:96%; border-collapse:collapse;" border="1" cellpadding="4">
+            <tr>
+              <td style="width:5%; text-align:center;">1</td>
+              <td width="20%">CPU0: read a0</td>
+              <td><i>CPU0 reads a0 from cache - state S~D</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">2</td>
+              <td width="20%">CPU0: read a2</td>
+              <td><i>CPU0 reads a2 from memory - state ~S~D</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">3</td>
+              <td width="20%">CPU0: write a2</td>
+              <td><i>CPU0 updates a2 in cache ONLY - state ~SD</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">4</td>
+              <td width="20%">CPU0: write a2</td>
+              <td><i>CPU0 updates a2 in cache ONLY - state ~SD</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">5</td>
+              <td width="20%">CPU1: read a2</td>
+              <td><i>CPU1 reads a2, CPU0 cache intervenes and supplies data - state SD <span style="color:red;">[NB: memory NOT updated]</span></i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">6</td>
+              <td width="20%">CPU1: write a2</td>
+              <td><i>CPU1 updates a2 in cache and writes through to memory and CPU0 cache - state S~D</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">7</td>
+              <td width="20%">CPU1: write a2</td>
+              <td><i>CPU1 updates a2 in cache and writes through to memory and CPU0 cache - state S~D</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">8</td>
+              <td width="20%">CPU1: read a0</td>
+              <td><i>CPU1 reads a0 from memory - state S~D <span style="color:red;">[NB: shared with CPU2 cache]</span></i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">9</td>
+              <td width="20%">CPU0: write a2</td>
+              <td><i>CPU 0 updates a2 in cache and writes through to memory because it thinks that the cache line is shared - state ~S~D <span style=
+              "color=red;">[now realises that it is no longer shared]</span></i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">10</td>
+              <td width="20%">CPU0: write a2</td>
+              <td><i>CPU 0 updates a2 in cache ONLY - state ~SD</i></td>
+            </tr>
+          </table>
+        </div>
+        <p>Sequence 2 [from Reset]</p>
+        <div>
+          <table style="margin-left:2%; width:96%; border-collapse:collapse;" border="1" cellpadding="4">
+            <tr>
+              <td style="width:5%; text-align:center;">1</td>
+              <td width="20%">CPU0: read a2</td>
+              <td><i>CPU0 reads a2 from memory - state ~S ~D</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">2</td>
+              <td style="width=20%;">CPU0: write a2</td>
+              <td><i>CPU0 updates a2 in cache ONLY - state ~SD</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">3</td>
+              <td style="width=20%;">CPU0: write a2</td>
+              <td><i>CPU0 updates a2 in cache ONLY - state ~SD</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">4</td>
+              <td style="width=20%;">CPU1: read a2</td>
+              <td><i>CPU1 reads a2, CPU0 cache intervenes and supplies data - state SD <span style="color:red;">[NB: memory NOT updated]</span></i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">5</td>
+              <td style="width=20%;">CPU1: read a0</td>
+              <td><i>CPU1 flushes a2 to memory, CPU0 and CPU1 change to S~D <span style="color:red;">[like a CPU1 write to a2 at this point]</span>, CPU1 then
+              reads a0 from memory - state S~D <span style="color:red;">[shared with CPU2 cache]</span></i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">6</td>
+              <td style="width=20%;">CPU0: write a2</td>
+              <td><i>CPU 0 updates a2 in cache and writes through to memory because it thinks that the cache line is shared - state ~S~D <span style=
+              "color:red;">[now realises that it is no longer shared]</span></i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">7</td>
+              <td style="width=20%;">CPU0: write a2</td>
+              <td><i>CPU 0 updates a2 in cache ONLY - state ~SD</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">8</td>
+              <td style="width=20%;">CPU0: write a0</td>
+              <td><i>CPU 0 flushes a2 to memory, reads a0 before writing since it's a write miss <span style="color:red;">[shared with CPU1 and CPU2
+              S~D]</span> and then updates a0 in cache and writes through to the other caches and memory - state S~D</i></td>
+            </tr>
+          </table>
+        </div>
+
+        <p>Sequence 3 [from Reset] CS3021/3421 Exam, Hilary Term 2017</p>
+        <div>
+          <table style="margin-left:2%; width:96%; border-collapse:collapse;" border="1" cellpadding="4">
+            <tr>
+              <td style="width:5%; text-align:center;">1</td>
+              <td width="20%">CPU0: reads a0</td>
+              <td><i>CPU0 reads a0 from its cache<BR>state S~D (unchanged)</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">2</td>
+              <td style="width=20%;">CPU0: reads a2</td>
+              <td><i>CPU0 reads a2 from memory into its cache (replaces a0)<BR>state ~S~D</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">3</td>
+              <td style="width=20%;">CPU0: write a2</td>
+              <td><i>CPU0 writes a2 to its cache ONLY<BR>state ~SD</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">4</td>
+              <td style="width=20%;">CPU1: write a2</td>
+              <td><i>CPU0 writes a2 to its cache ONLY<BR>state ~SD (unchanged)</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">5</td>
+              <td style="width=20%;">CPU1: read a2</td>
+              <td><i>CPU1 reads a2 from memory into its cache<BR>CPU0 intervenes to supply data<BR>
+              	     memory NOT updated (feature of Firefly protocol)<BR>state SD<BR>
+              	     state of corresponding data in CPU0 cache also updated to SD</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">6</td>
+              <td style="width=20%;">CPU2: read a2</td>
+              <td><i>CPU2 reads a2 from memory into its cache<BR>
+              	     CPU0 and CPU1 intervene to supply data<BR>
+              	     state SD (copy of a2 now in all 3 caches in the SD state)</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">7</td>
+              <td style="width=20%;">CPU0: write a2</td>
+              <td><i>CPU0 writes through a2 and updates cached copies and memory<BR>
+              		 state S~D (unchanged)</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">8</td>
+              <td style="width=20%;">CPU0: write a2</td>
+              <td><i>CPU0 writes through a2 and updates cached copies and memory<BR>
+              		 state S~D (unchanged)</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">9</td>
+              <td style="width=20%;">CPU0: read a0</td>
+              <td><i>CPU0 read a0 from memory into its cache (replaces a2)<BR>state ~S~D</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">10</td>
+              <td style="width=20%;">CPU1: read a0</td>
+              <td><i>CPU1 reads a0 from memory into its cache (replaces a2)<BR>state S~D<BR>state of corresponding data in CPU0 cache also updated to S~D</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">11</td>
+              <td style="width=20%;">CPU2: write a2</td>
+              <td><i>CPU2 writes through a2 and updates cached copies and memory as it thinks cache line is shared<BR>state ~S~D (as no other CPU asserts the SHARED bus signal)</i></td>
+            </tr>
+            <tr>
+              <td style="width:5%; text-align:center;">12</td>
+              <td style="width=20%;">CPU2: write a2</td>
+              <td><i>CPU2 updates cache ONLY<BR>state ~SD</i></td>
+            </tr>
+               </table>
+        </div>
+
+
+      </td>
+    </tr>
+  </table><br>
+  <script>
+        vplayer = new VPlayer("canvas", firefly);
+        footer("caches");
+  </script>
+</body>
+</html>
